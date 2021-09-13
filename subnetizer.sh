@@ -1,8 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-cat addreses.txt | while read ip; do
+## SUBNETIZER ##
+cat ip.txt | while read ip; do
   IFS=. read ip1 ip2 ip3 ip4 <<< "$ip"
-  echo $ip1\.$ip2 >> addreses2.txt
+  echo $ip1\.$ip2 >> subnetizer.txt
 done
 
-cat addreses2.txt | sort | uniq
+sub=$(cat subnetizer.txt | sort | uniq)
+
+echo "Block     : $sub "
