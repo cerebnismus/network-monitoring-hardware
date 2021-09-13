@@ -11,7 +11,7 @@ do
     echo "$ip" >> down-output.txt
     fi
 
-    echo "Total UP: " cat up-output.txt | wc -l 
-    echo "Total DOWN: " cat down-output.txt | wc -l 
+    echo "Total UP: " && cat up-output.txt | wc -l 
+    echo "Total DOWN: " && cat down-output.txt | wc -l 
 
 done
