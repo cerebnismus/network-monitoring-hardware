@@ -1,3 +1,6 @@
+# 2021
+# oguzhan.ince@protonmail.com
+
 #!/bin/bash
 
 total=0
