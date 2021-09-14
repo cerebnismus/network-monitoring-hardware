@@ -1,7 +1,7 @@
-# 2021
-# oguzhan.ince@protonmail.com
-
 #!/bin/bash
+
+# get connection info from network eq.
+# (tryng fastest ping)
 
 total=0
 reach=0
