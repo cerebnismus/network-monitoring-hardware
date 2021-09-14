@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 du -sh /var/cache/apt/archives
 sudo apt-get clean
