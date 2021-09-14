@@ -3,6 +3,9 @@
 # get connection info from network eq.
 # (tryng fastest ping)
 
+bold=$(tput bold)
+normal=$(tput sgr0)
+
 total=0
 reach=0
 unreach=0
@@ -22,7 +25,7 @@ cat ip.txt | while read ip; do
 	echo "UP: $ip" 
     	echo "$ip" >> up-output.txt
     else
-    	echo "DOWN: $ip" 
+    	echo "${bold}DOWN: $ip${normal}" 
     	echo "$ip" >> down-output.txt
     fi
 done
