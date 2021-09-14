@@ -1,17 +1,27 @@
 #!/bin/bash
 
-cat ip.txt |  while read ip
-do
-    snmpwalk -c public -v2c -t 10 -r 1 "$ip" system > /dev/null
+# get system data from network eq.
+# (tryng two community strings)
+
+bold=$(tput bold)
+normal=$(tput sgr0)
+
+com_str_1="public"
+com_str_2="public2"
+
+cat ip.txt | while read ip; do
+    snmpwalk -c "$com_str_1" -v2c -t10 -r1 "$ip" system >/dev/null
     if [ $? -eq 0 ]; then
-    #echo "SNMP DOWN: $ip" 
-    echo "$ip" >> up-output-snmp.txt
+            echo "OK: $ip : $com_str_1" 
+            echo "$ip" >> snmp-ok.txt
     else
-    #echo "SNMP UP: $ip" 
-    echo "$ip" >> down-output-snmp.txt
+        snmpwalk -c "$com_str_2" -v2c -t10 -r1 "$ip" system >/dev/null
+        if [ $? -eq 0 ]; then
+            echo "OK: $ip : $com_str_2" 
+            echo "$ip : $com_str_2" >> snmp-ok.txt
+        else
+        echo "${bold} NOK: $ip ${normal}"  
+        echo "$ip" >> snmp-nok.txt
+        fi
     fi
-
-    echo "Total SNMP UP: " && cat up-output-snmp.txt | wc -l 
-    echo "Total SNMP DOWN: " && cat down-output-snmp.txt | wc -l 
-
 done
