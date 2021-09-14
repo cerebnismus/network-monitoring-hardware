@@ -20,7 +20,7 @@ cat ip.txt | while read ip; do
             echo "OK: $ip : $com_str_2" 
             echo "$ip : $com_str_2" >> snmp-ok.txt
         else
-        echo "${bold} NOK: $ip ${normal}"  
+        echo "${bold}NOK: $ip ${normal}"  
         echo "$ip" >> snmp-nok.txt
         fi
     fi
