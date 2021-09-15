@@ -71,7 +71,7 @@ echo "Reachable : %$perc"
 
 ## RUNTIME ##
 duration=$(echo "$(date +%s.%N) - $start" | bc)
-execution_time=`printf "%.2f seconds" $duration`
+execution_time="printf '%.2f seconds' $duration"
 echo -e "Runtime   : $execution_time\n"
 
 # rm snmpv3-ok-output.txt snmpv3-nok-output.txt snmpv3-ok-subnetizer.txt snmpv3-nok-subnetizer.txt &>/dev/null
