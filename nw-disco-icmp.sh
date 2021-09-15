@@ -19,7 +19,7 @@ echo -e -n "\nSpecify IP file: "
 read ans
 
 ## PING ##
-cat ip.txt | while read ip; do
+cat $ans | while read ip; do
     ping -c1 -t50 -W5 "$ip" >/dev/null
     if [ $? -eq 0 ]; then
 	echo "OK: $ip" 
