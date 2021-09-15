@@ -19,9 +19,11 @@ ls | grep .txt
 echo -e -n "\nSpecify IP file: "
 read ans
 
+## ESTIMATED TIME ## IF EACH QUERY 3 SEC ##
 export ipwcl="$ans"
 estim=$(wc -l "$ipwcl" 2>/dev/null | awk '{print $1}')
 estimated_hours=$((ipwcl/1200))
+echo -e "\nEstimated time by hours: $estimated_hours\n"
 
 ## PING ##
 cat $ans | while read ip; do
