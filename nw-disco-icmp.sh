@@ -19,6 +19,10 @@ ls | grep .txt
 echo -e -n "\nSpecify IP file: "
 read ans
 
+export ipwcl="$ans"
+estim=$(wc -l "$ipwcl" 2>/dev/null | awk '{print $1}')
+estimated_hours=$((ipwcl/1200))
+
 ## PING ##
 cat $ans | while read ip; do
     ping -c1 -t50 -W5 "$ip" >/dev/null
@@ -46,7 +50,7 @@ cat icmp-ok-output.txt | while read ip; do
   echo -e "$ip1\.$ip2\n" >> icmp-ok-subnetizer.txt
 done
 
-oks=$(cat icmp-ok-output.txt | sort | uniq)
+oks=$(cat icmp-ok-subnetizer.txt | sort | uniq)
 echo -e "\nreachable blocks are:\n"
 echo $oks
 
