@@ -14,7 +14,7 @@ reach=0
 unreach=0
 
 ## PROMPT ##
-echo -e "\nFILES:"
+echo -e "\nTEXT FILES:"
 ls | grep .txt
 echo -e -n "\nSpecify IP file: "
 read ans
@@ -68,7 +68,7 @@ echo "Reachable : %$perc"
 
 ## RUNTIME ##
 duration=$(echo "$(date +%s.%N) - $start" | bc)
-execution_time=`printf "%.2f seconds" $duration`
+execution_time="printf '%.2f seconds' $duration"
 echo -e "Runtime   : $execution_time\n"
 
 # rm icmp-ok-output.txt icmp-nok-output.txt icmp-ok-subnetizer.txt icmp-nok-subnetizer.txt &>/dev/null
