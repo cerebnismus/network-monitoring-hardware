@@ -4,7 +4,8 @@
 # (tryng fastest ping)
 
 ## VARIABLES ##
-start="date"
+start=$(date +%s.%N)
+
 bold=$(tput bold)
 normal=$(tput sgr0)
 
@@ -65,8 +66,8 @@ echo "Total OK  : $reach"
 echo "Total NOK : $unreach"
 echo "Reachable : %$perc"
 
-end="date"
-runtime=$((end-start))
-echo -e "Runtime   : $runtime\n"
+duration=$(echo "$(date +%s.%N) - $start" | bc)
+execution_time=`printf "%.2f seconds" $duration`
+echo -e "Runtime   : $execution_time\n"
 
 # rm icmp-ok-output.txt icmp-nok-output.txt icmp-ok-subnetizer.txt icmp-nok-subnetizer.txt &>/dev/null
