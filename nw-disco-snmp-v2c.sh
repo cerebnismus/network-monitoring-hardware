@@ -74,6 +74,7 @@ echo "Total OK  : $reach"
 echo "Total NOK : $unreach"
 echo "Reachable : %$perc"
 
+## RUNTIME ##
 duration=$(echo "$(date +%s.%N) - $start" | bc)
 execution_time=`printf "%.2f seconds" $duration`
 echo -e "Runtime   : $execution_time\n"
