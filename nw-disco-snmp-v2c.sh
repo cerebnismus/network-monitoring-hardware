@@ -13,11 +13,12 @@ total=0
 reach=0
 unreach=0
 
-com_str_1="public"
-com_str_2="public2"
+com_str_1="w"
+com_str_2="t"
+com_str_3="f"
 
 ## PROMPT ##
-echo -e "\nFILES:"
+echo -e "\nTEXT FILES:"
 ls | grep .txt
 echo -e -n "\nSpecify IP file: "
 read ans
@@ -27,15 +28,20 @@ cat $ans | while read ip; do
     if [ $? -eq 0 ]; then
             echo "OK: $ip : $com_str_1" 
             echo "$ip" >> snmp-ok-output.txt
-    else
+    elif
         snmpwalk -c "$com_str_2" -v2c -t10 -r1 "$ip" system >/dev/null
         if [ $? -eq 0 ]; then
             echo "OK: $ip : $com_str_2" 
             echo "$ip : $com_str_2" >> snmp-ok-output.txt
-        else
+    elif
+        snmpwalk -c "$com_str_3" -v2c -t10 -r1 "$ip" system >/dev/null
+        if [ $? -eq 0 ]; then
+            echo "OK: $ip : $com_str_3" 
+            echo "$ip : $com_str_3" >> snmp-ok-output.txt
+    
+    else
         echo "${bold}NOK: $ip ${normal}"  
         echo "$ip" >> snmp-nok-output.txt
-        fi
     fi
 done
 
@@ -76,7 +82,7 @@ echo "Reachable : %$perc"
 
 ## RUNTIME ##
 duration=$(echo "$(date +%s.%N) - $start" | bc)
-execution_time=`printf "%.2f seconds" $duration`
+execution_time="printf '%.2f seconds' $duration"
 echo -e "Runtime   : $execution_time\n"
 
 # rm snmp-ok-output.txt snmp-nok-output.txt snmp-ok-subnetizer.txt snmp-nok-subnetizer.txt &>/dev/null
