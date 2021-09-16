@@ -25,7 +25,7 @@ estim=$(wc -l "$ipwcl" 2>/dev/null | awk '{print $1}')
 estimated_min=$((estim/60))
 echo -e "\nEstimated time: $estimated_min minutes\n"
 
-### To sleep for 1.5 seconds: ##
+## To sleep for 1 seconds ##
 sleep 1
 
 ## PING ##
