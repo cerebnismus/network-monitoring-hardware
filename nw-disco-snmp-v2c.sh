@@ -4,7 +4,7 @@
 # (tryng two community strings)
 
 ## VARIABLES ##
-start=$(date +%s.%N)
+start=$(date +%s)
 
 bold=$(tput bold)
 normal=$(tput sgr0)
@@ -81,8 +81,8 @@ echo "Total NOK : $unreach"
 echo "Reachable : %$perc"
 
 ## RUNTIME ##
-duration=$(echo "$(date +%s.%N) - $start" | bc)
-execution_time="printf '%.2f seconds' $duration"
+duration=$(echo "$(date +%s) - $start" | bc)
+execution_time=$(printf "%.2f seconds" $duration)
 echo -e "Runtime   : $execution_time\n"
 
 # rm snmp-ok-output.txt snmp-nok-output.txt snmp-ok-subnetizer.txt snmp-nok-subnetizer.txt &>/dev/null
