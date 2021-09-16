@@ -19,11 +19,14 @@ ls | grep .txt
 echo -e -n "\nSpecify IP file: "
 read ans
 
-## ESTIMATED TIME ## IF EACH QUERY 3 SEC ##
+## ESTIMATED TIME * IF EACH QUERY 1 SEC ##
 export ipwcl="$ans"
 estim=$(wc -l "$ipwcl" 2>/dev/null | awk '{print $1}')
-estimated_hours=$((ipwcl/1200))
-echo -e "\nEstimated time by hours: $estimated_hours\n"
+estimated_min=$((estim/60))
+echo -e "\nEstimated time: $estimated_min minutes\n"
+
+### To sleep for 1.5 seconds: ##
+sleep 1
 
 ## PING ##
 cat $ans | while read ip; do
@@ -75,6 +78,8 @@ echo "Reachable : %$perc"
 ## RUNTIME ##
 duration=$(echo "$(date +%s) - $start" | bc)
 execution_time=$(printf "%.2f seconds" $duration)
+
+echo -e "\nEst. Time : $estimated_min minutes\n"
 echo -e "Runtime   : $execution_time\n"
 
 # rm icmp-ok-output.txt icmp-nok-output.txt icmp-ok-subnetizer.txt icmp-nok-subnetizer.txt &>/dev/null
