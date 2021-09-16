@@ -23,6 +23,16 @@ ls | grep .txt
 echo -e -n "\nSpecify IP file: "
 read ans
 
+## ESTIMATED TIME * IF EACH QUERY 1 SEC ##
+export ipwcl="$ans"
+estim=$(wc -l "$ipwcl" 2>/dev/null | awk '{print $1}')
+estimated_min=$((estim/60))
+echo -e "\nEstimated time: $estimated_min minutes\n"
+
+## To sleep for 1 seconds ##
+sleep 1
+
+
 cat $ans | while read ip; do
     snmpwalk -c "$com_str_1" -v2c -t10 -r1 "$ip" system >/dev/null
     if [ $? -eq 0 ]; then
@@ -83,6 +93,8 @@ echo "Reachable : %$perc"
 ## RUNTIME ##
 duration=$(echo "$(date +%s) - $start" | bc)
 execution_time=$(printf "%.2f seconds" $duration)
+
+echo -e "\nEst. Time : $estimated_min minutes\n"
 echo -e "Runtime   : $execution_time\n"
 
 # rm snmp-ok-output.txt snmp-nok-output.txt snmp-ok-subnetizer.txt snmp-nok-subnetizer.txt &>/dev/null
