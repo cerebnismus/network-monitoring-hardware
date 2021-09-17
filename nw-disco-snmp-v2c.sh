@@ -23,10 +23,10 @@ ls | grep .txt
 echo -e -n "\nSpecify IP file: "
 read ans
 
-## ESTIMATED TIME * IF EACH QUERY 1 SEC ##
+## ESTIMATED TIME * IF EACH QUERY 3 SEC ##
 export ipwcl="$ans"
 estim=$(wc -l "$ipwcl" 2>/dev/null | awk '{print $1}')
-estimated_min=$((estim/60))
+estimated_min=$((estim/180))
 echo -e "\nEstimated time: $estimated_min minutes\n"
 
 ## To sleep for 1 seconds ##
