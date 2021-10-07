@@ -4,4 +4,3 @@ du -sh /var/cache/apt/archives
 sudo apt-get clean
 sudo apt autoremove
 sudo apt autoremove --purge
-sudo apt remove htop ranger nano
