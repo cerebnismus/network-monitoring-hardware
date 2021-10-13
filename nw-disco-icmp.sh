@@ -1,7 +1,5 @@
 #!/bin/bash
-
 # get connection info from network eq.
-# (tryng fastest ping)
 
 ## VARIABLES ##
 start=$(date +%s)
