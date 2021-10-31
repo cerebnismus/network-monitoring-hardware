@@ -7,7 +7,7 @@ sudo nmap -sn --privileged 192.168.1.0/24
 for more: https://nmap.org/book/man-examples.html
 ### tcpdump
 ```
-sudo tcpdump src 10.254.124.2 and dst 10.254.63.53 and dst port -w capture_file_netas
+sudo tcpdump src 1.1.1.1 and dst 2.2.2.2 and dst port -w capture_file_netas
 tcpdump -r capture_netas
 ```
 for more: https://danielmiessler.com/study/tcpdump/
