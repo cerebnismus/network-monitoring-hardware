@@ -1,6 +1,7 @@
-#!/usr/local/bin/ python3
+#!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
-
+#  -*- cerebnismus -*-
+ 
 import cv2
 import numpy as np
 

@@ -1,6 +1,7 @@
-#!/usr/local/bin/ python3
+#!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
-
+#  -*- cerebnismus -*-
+ 
 # when you want to calculate run time of a function
 # you can use this snippet
 

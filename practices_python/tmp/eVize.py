@@ -1,6 +1,7 @@
-#!/usr/local/bin/ python3
+#!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
-
+#  -*- cerebnismus -*-
+ 
 import requests
 
 # D type country visa appointment automation (turkey to poland)

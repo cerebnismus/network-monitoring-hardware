@@ -1,6 +1,7 @@
-#!/usr/local/bin/ python3
+#!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
-
+#  -*- cerebnismus -*-
+ 
 import random, time, os
 from selenium import webdriver
 from selenium.webdriver import Chrome
