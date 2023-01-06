@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
+#  -*- cerebnismus -*-
 
-# github.com/cerebnismus
 # 4.1.2023 14:50 
 
 # Soru1

@@ -1,5 +1,7 @@
-#!/usr/local/bin/ python3
-
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+#  -*- cerebnismus -*-
+ 
 # Define a function called character_count which expects a string as an argument and returns a 
 # dictionary whose keys are characters in the string, while the corresponding values are the
 # number of times that character appears in the string.

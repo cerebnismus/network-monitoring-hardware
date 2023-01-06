@@ -1,5 +1,7 @@
-#!/usr/local/bin/ python3
-
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+#  -*- cerebnismus -*-
+ 
 # Define a function called replace_char_in_str which has three parameters original_str,pos and char.
 # The function "replaces" a character in the string passed in as the argument original_str.
 # Moreq precisely, the function replaces the character at the position specified by the integer pos with the character char.

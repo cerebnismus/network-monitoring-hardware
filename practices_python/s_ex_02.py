@@ -1,5 +1,7 @@
-#!/usr/local/bin/ python3
-
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+#  -*- cerebnismus -*-
+ 
 # create a function called total_price, which has two parameters num_apples and num_oranges, and returns the total price of the apples and oranges according to the following rules:
 # 1. The price of an apple is 0.36 dollars
 # 2. The price of an orange is 0.42 dollars

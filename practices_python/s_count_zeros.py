@@ -1,5 +1,7 @@
-#!/usr/local/bin/ python3
-
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+#  -*- cerebnismus -*-
+ 
 # Define a function called count_zeros which has one parameter "number".
 # The function returns the number of zeros in the value passed in as argument "number".
 # The argument "number" can be of type str, float or int.

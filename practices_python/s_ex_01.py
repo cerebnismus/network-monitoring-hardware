@@ -1,5 +1,7 @@
-#!/usr/local/bin/ python3
-
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+#  -*- cerebnismus -*-
+ 
 # create a function called round_str, which behaves identically to the built-in function round, if it receives a string converts the str to float and then rounds it to the specified number of decimal places, if it receives a float, it rounds it to the specified number of decimal places.
 def round_str(value, num_decimal_places):
 

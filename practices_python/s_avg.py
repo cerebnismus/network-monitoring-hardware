@@ -1,4 +1,6 @@
-#!/usr/local/bin/ python3
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+#  -*- cerebnismus -*-
 
 # Define a function called avg which expects a list of numbers as an argument and returns the average.
 # The output should be rounded to two decimal places. Without round function.

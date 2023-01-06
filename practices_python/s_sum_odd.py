@@ -1,5 +1,7 @@
-#!/usr/local/bin/ python3
-
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+#  -*- cerebnismus -*-
+ 
 # Define a function called sum_odd which has two parameters "start" and "stop".
 # The function calculates the sum of all odd numbers in the range specified by arguments start and stop.
 # The integer passed in as argument start should be included in the range, while the integer stop should be excluded from the range.

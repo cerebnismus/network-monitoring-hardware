@@ -1,5 +1,6 @@
-#!/usr/bin/ python
+#!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
+#  -*- cerebnismus -*-
 
 """
 kg=int(input("lütfen kilonuzu giriniz: "))

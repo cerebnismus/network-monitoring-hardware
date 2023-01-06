@@ -1,5 +1,7 @@
-#!/usr/local/bin/ python3
-
+#!/usr/local/bin/python3
+# -*- coding: utf-8 -*-
+#  -*- cerebnismus -*-
+ 
 # Define a function called remove_duplicates which expects one list as an argument and returns a new list, which is a copy pf the original list with all the duplicate items removed.
 #When removing items, the first occurence of an item should be kept,while all subsequent duplicates of that item are removed.
 
