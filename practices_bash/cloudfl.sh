@@ -1,9 +1,9 @@
 #!/bin/sh
 
-key="beb7392e741f17cea755f5fc1c353c39086f3"
+key=""
 email="oguzhan.ince@protonmail.com"
 zone="cerebnismus.com"
-zone_id="5a7d2bbfeb4629c0d7e7a2cdd59e78cc"
+zone_id=""
 type=A
 name="nm"
 content=$(curl -s http://myexternalip.com/raw)
@@ -11,20 +11,19 @@ ttl=360 # means auto-TTL
 proxied=true # means use the proxied IP address
 
 # TEST
-# curl -X GET "https://api.cloudflare.com/client/v4/zones/5a7d2bbfeb4629c0d7e7a2cdd59e78cc" \
+# curl -X GET "https://api.cloudflare.com/client/v4/zones/XXXXXX" \
 #      -H "Content-Type:application/json" \
-#      -H "X-Auth-Key:beb7392e741f17cea755f5fc1c353c39086f3" \
+#      -H "X-Auth-Key:" \
 #      -H "X-Auth-Email:oguzhan.ince@protonmail.com"
 
 # GET RECORDS
-# curl -X GET "https://api.cloudflare.com/client/v4/zones/5a7d2bbfeb4629c0d7e7a2cdd59e78cc/dns_records?type=A&page=1&per_page=100&order=type&direction=desc&match=all" \
+# curl -X GET "https://api.cloudflare.com/client/v4/zones/XXXXXXX/dns_records?type=A&page=1&per_page=100&order=type&direction=desc&match=all" \
 #      -H "Content-Type:application/json" \
-#      -H "X-Auth-Key:1234567876543f5fc12342356f3235" \
+#      -H "X-Auth-Key:" \
 #      -H "X-Auth-Email:oguzhan.ince@protonmail.com"
 
 # TO:DO = SET RECORD ID FROM $GET_RECORDS output
-# c3460bc01dc4e8a756382c5ecc315394
-rec_id="c3460bc01dc4e8a756382c5ecc315394"
+rec_id=""
 
 if [ "$content" = "" ]
 then
