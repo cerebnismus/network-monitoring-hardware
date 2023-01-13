@@ -60,19 +60,10 @@ class Spoofer(object):
 
 """
 
-#USERNAME = "cerebnismus"
-#PASSWORD = "Ybayv4jqs*"
-#ENDPOINT = "pr.oxylabs.io:7777"
 
-# curl -x pr.oxylabs.io:7777 -U "customer-cerebnismus-cc-pl-city-warsaw:Ybayv4jqs*" https://ipinfo.io
 
 # entry = ('https://customer-%s:%s@%s' % (USERNAME, PASSWORD, ENDPOINT))
-# entry = "https://customer-cerebnismus-cc-pl-city-warsaw:Ybayv4jqs*@cnt9t1is.com:8000"
-
-# customer-cerebnismus-cc-tr-sessid-0111786884-sesstime-10:Ybayv4jqs*@pr.oxylabs.io:7777
-# http://customer-cerebnismus-cc-tr-sessid-0111786884-sesstime-10:Ybayv4jqs*@pr.oxylabs.io:7777
 # curl -x pr.oxylabs.io:7777 -U customer-USERNAME:PASSWORD https://ip.oxylabs.io
-
 # https://www.cloudflare.com/cdn-cgi/trace
 
 '''
@@ -122,8 +113,6 @@ class DriverOptions(object):
         
         # proxy with user and password
         # self.options.add_argument('--proxy-server=%s' % didsoft_proxy)
-        
-        # oguzhan.ince.protonmail.com:p5ckpb@gate2.proxyfuel.com:2000
         # self.options.add_argument('--proxy-server=%s:%s@%s:%s' % (PROXY_USER, PROXY_PASS, PROXY_HOST, PROXY_PORT))
 
 class WebDriver(DriverOptions):
@@ -186,7 +175,7 @@ def main():
     time.sleep(4)
 
     _email = "oguzhan.ince@protonmail.com"
-    _password = "Ybayv4jqs*"
+    _password = "xxx"
         
     # do not wait #  --   #_email_input = wait.until(EC.presence_of_element_located((By.ID, 'mat-input-0')))
     _email_input = wait.until(EC.presence_of_element_located((By.ID, 'mat-input-0')))
@@ -205,12 +194,12 @@ def main():
 
     #time.sleep(2222)
 
-    sitekey_clean = "6LdJReUUAAAAAPR1hddg-9JUC_TO13OrlKVpukHL"
+    sitekey_clean = "xxx"
     print("sitekey is: ", sitekey_clean)
 
     solver = recaptchaV2Proxyless()
     solver.set_verbose(1)
-    solver.set_key("ed22770ac73212ee52523d36e59be6a4")
+    solver.set_key("xxx")
     solver.set_website_url("https://visa.vfsglobal.com/tur/tr/pol/login")
     solver.set_website_key(sitekey_clean)
 
