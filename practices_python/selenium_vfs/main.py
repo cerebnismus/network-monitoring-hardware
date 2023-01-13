@@ -112,8 +112,6 @@ class DriverOptions(object):
         # self.options.add_argument('--proxy-server=%s' % self.helperSpoofer.ip)
         
         self.options.add_argument('--proxy-server=%s' % didsoft_proxy)
-        
-        # oguzhan.ince.protonmail.com:p5ckpb@gate2.proxyfuel.com:2000
         # self.options.add_argument('--proxy-server=%s:%s@%s:%s' % (PROXY_USER, PROXY_PASS, PROXY_HOST, PROXY_PORT))
 
 class WebDriver(DriverOptions):
