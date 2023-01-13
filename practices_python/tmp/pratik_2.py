@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 #  -*- cerebnismus -*-
 
+# get the current working directory
+
 def get_kg():
     
     try:
