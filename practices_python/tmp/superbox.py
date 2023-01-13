@@ -6,8 +6,8 @@ import requests, os, time
 import xmltodict
 
 MODEM_IP = "192.168.1.1"
-MODEM_USER = "admin"
-MODEM_PASS = "super0nline"
+MODEM_USER = "xxx"
+MODEM_PASS = "xxx"
 
 XML_APIS = [
   '/api/monitoring/traffic-statistics',
