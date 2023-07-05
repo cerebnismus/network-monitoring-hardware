@@ -1,5 +1,3 @@
-![Bowl of Petunias](bowl_of_petunias.png)
-
 > "Oh no, not again." - The Bowl of Petunias
 This project is an exploration into the vastness of network monitoring and data analysis, inspired by the iconic scene from Douglas Adams' 📓 of "The Hitchhiker's Guide to the Galaxy."
 
