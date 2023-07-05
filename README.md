@@ -6,6 +6,7 @@ The Bowl of Petunias project aims to create a comprehensive network monitoring s
 
 ## Features
 - **Universal Network Monitoring**: Monitor network devices across all layers, from the fundamental physical layer to the intricate application layer.
+- **Traversal Network Discovery**: Discover network devices across all layers, from the fundamental physical layer to the intricate application layer.
 - **Signal Spectrum Analysis**: Delve into the complete signal spectrum, unveiling hidden patterns and anomalies in the vastness of network traffic.
 - **Big Data Services**: Harness the power of big data to capture, store, and analyze network data, opening up possibilities for deep insights and intelligent decision-making.
 - **Cosmic Packet Analysis**: Analyze ICMP and SNMP packets with precision, extracting valuable information and unraveling the mysteries of network behavior.
