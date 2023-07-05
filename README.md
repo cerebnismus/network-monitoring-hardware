@@ -1,7 +1,7 @@
 ![Bowl of Petunias](bowl_of_petunias.png)
 
 > "Oh no, not again." - The Bowl of Petunias
-This project is an exploration into the vastness of network monitoring and data analysis, inspired by the iconic scene from Douglas Adams' "📓 The Hitchhiker's Guide to the Galaxy."
+This project is an exploration into the vastness of network monitoring and data analysis, inspired by the iconic scene from Douglas Adams' 📓 of "The Hitchhiker's Guide to the Galaxy."
 
 ## Project Overview
 The Bowl of Petunias project aims to create a comprehensive network monitoring system capable of analyzing the intricate signals traversing the network cosmos. Our mission is to dive into the depths of network data and uncover insights that will leave you contemplating the meaning of life, the universe, and everything.
