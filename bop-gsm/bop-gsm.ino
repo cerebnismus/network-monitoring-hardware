@@ -1,18 +1,36 @@
-import serial
-import time
+#include <SoftwareSerial.h>
 
-# Establish serial communication with the Arduino
-ser = serial.Serial('/dev/ttyUSB0', 9600)  # Replace with the correct serial port and baud rate
+// Set up the SoftwareSerial instance
+SoftwareSerial gsmSerial(7, 8);  // RX, TX pins for the GSM shield
 
-# Delay to ensure a stable connection
-time.sleep(2)
+void setup() {
+  // Start the serial communication
+  Serial.begin(9600);
+  gsmSerial.begin(9600);
 
-# Phone number to send
-phone_number = "+905304543426"  # Replace with the desired phone number
+  // Read the phone number from the Raspberry Pi
+  char phone_number[20];
+  int index = 0;
+  while (Serial.available()) {
+    char c = Serial.read();
+    phone_number[index] = c;
+    index++;
+  }
+  phone_number[index] = '\0';  // Null-terminate the string
 
-# Send the phone number to the Arduino
-ser.write(phone_number.encode())
+  // Send the phone number to the GSM module
+  gsmSerial.print("AT+CMGS=\"");
+  gsmSerial.print(phone_number);
+  gsmSerial.println("\"");
+  delay(1000);
 
-# Close the serial connection
-ser.close()
+  // Send an example SMS
+  gsmSerial.println("Hello from Arduino!");
+  delay(1000);
+  gsmSerial.write(26);  // End the SMS by sending Ctrl+Z
+}
+
+void loop() {
+  // Do nothing in the loop
+}
 
