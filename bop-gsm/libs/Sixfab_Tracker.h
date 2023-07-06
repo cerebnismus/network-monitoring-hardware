@@ -1,6 +1,9 @@
 /*
   Sixfab_Tracker.h 
+  -
   Library for Sixfab Tracker Shield for Arduino.
+  -
+  Created by Yasin Kaya (selengalp), September 10, 2018.
 */
 
 #ifndef _SIXFAB_TRACKER_H
@@ -281,7 +284,7 @@ class SixfabTracker
 
     const char* showICCID(void);
     const char* simStatus(void);
-	const char* enterPinCode(const char *pinCode);	// MSMORKAN 02.2021
+
 /******************************************************************************************
  *** Network Service Functions ************************************************************
  ******************************************************************************************/ 
@@ -306,8 +309,6 @@ class SixfabTracker
 
     void checkOperator();
     void sendSMS(const char *, const char *);
-	String readSMS(uint8_t index);				// MSMORKAN 02.2021
-	void deleteAllSMS(void);					// MSMORKAN 02.2021
 
 /******************************************************************************************
  *** L96 GNSS Functions ***********************************************************************
