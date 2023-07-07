@@ -48,12 +48,12 @@ arduino-cli compile  \
 #include <SoftwareSerial.h>
 
 // MAC addresses must be unique on the LAN and can be assigned by the user or generated here randomly.
-byte sourceMAC[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };      // Replace with your Arduino's MAC address
 byte destinationMAC[] = { 0x74, 0xD2, 0x1D, 0xF3, 0xAE, 0xC7 }; // Replace with your Router's MAC address
+byte sourceMAC[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };      // Replace with your Arduino's MAC address
 
 // IP addresses are dependent on your local network.
+IPAddress destinationIP(8, 8, 8, 8);  // Replace with the IP address of your destination node
 IPAddress sourceIP(192, 168, 8, 125);       // Replace with your Arduino's IP address
-IPAddress destinationIP(192, 168, 8, 106);  // Replace with the IP address of your destination node
 IPAddress dns(192, 168, 8, 1);              // Replace with your network's DNS address
 IPAddress gateway(192, 168, 8, 1);          // Replace with your Router's IP address
 IPAddress subnet(255, 255, 255, 0);         // Replace with your network's subnet mask
@@ -62,11 +62,11 @@ EthernetClient ethClient;
 unsigned int sequenceNumber = 0;
 
 void setup() {
-  Ethernet.begin(sourceMAC, sourceIP);
+  Ethernet.begin(sourceMAC);
   Serial.begin(9600);
 
   // Initialize Ethernet, returns 0 if the DHCP configuration failed, and 1 if it succeeded
-  if (Ethernet.begin(mac) == 0) {
+  if (Ethernet.begin(sourceMAC) == 0) {
     Serial.println("Failed to configure Ethernet using DHCP");
     // Manaul configuration set a static IP address if DHCP fails to configure
     // static void begin(uint8_t *mac, IPAddress ip, IPAddress dns, IPAddress gateway, IPAddress subnet);
@@ -76,12 +76,13 @@ void setup() {
   delay(1000);
   Serial.println("Ethernet connected");
 
+/*
   // Make a HTTP GET request to the remote server
   // In this case, request to get the router's root page
   if (ethClient.connect(gateway, 80)) {
     Serial.println("Connected to server");
     ethClient.println("GET / HTTP/1.1");
-    ethClient.println("Host: 192.168.8.1");
+    ethClient.println("Host: 8.8.8.8");
     ethClient.println("Connection: close");
     ethClient.println();
   }
@@ -94,6 +95,8 @@ void setup() {
   }
 
   ethClient.stop(); // Disconnect from the server
+*/
+
   delay(1000);      // Wait a second before continuing
 }
 
@@ -103,6 +106,7 @@ void loop() {
     char input = Serial.read();
     if (input == 'p') {
       sendPingRequest();
+      delay(10000); // Wait
     }
   }
 }
@@ -112,8 +116,8 @@ void sendPingRequest() {
   byte packetBuffer[48]; // Create an Ethernet packet buffer
 
   // ETHERNET HEADER
-  memcpy(packetBuffer, targetmac, 6); // Destination MAC address
-  memcpy(packetBuffer + 6, Ethernet.MACAddress(), 6); // Source MAC address
+  memcpy(packetBuffer, destinationMAC, 6); // Destination MAC address
+  memcpy(packetBuffer + 6, sourceMAC, 6); // Source MAC address
   packetBuffer[12] = 0x08; // EtherType: IPv4 (0x0800) (0b00001000) (8) (IP packet)
 
   // IP HEADER
@@ -133,8 +137,8 @@ void sendPingRequest() {
   packetBuffer[23] = 0xFF; // Protocol: RAW (255) (0xFF)
   packetBuffer[24] = 0x00; // Header Checksum (placeholder)   +
   packetBuffer[25] = 0x00; // Header Checksum (placeholder)   +
-  memcpy(packetBuffer + 26, localIP.raw_address(), 4);  // Source IP address
-  memcpy(packetBuffer + 30, targetIP.raw_address(), 4); // Destination IP address
+  memcpy(packetBuffer + 26, sourceIP.operator[](0), 4);      // Source IP address
+  memcpy(packetBuffer + 30, destinationIP.operator[](0), 4); // Destination IP address
 
   // ICMP HEADER
   packetBuffer[34] = 0x08; // Type: ICMP Echo Request (8) (0x08)
@@ -168,7 +172,7 @@ void sendPingRequest() {
   // Send the ICMP Echo Request packet
   // Open a RAW connection to the target IP address
   // Returns 1 if successful, 0 if there are no sockets available to use
-  if (!ethClient.connect(targetIP, 0)) {
+  if (!ethClient.connect(destinationIP, 0)) {
     Serial.println("Failed to open RAW connection");
     return;
   }
