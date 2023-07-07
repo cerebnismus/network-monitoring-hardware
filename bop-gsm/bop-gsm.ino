@@ -1,9 +1,28 @@
 /*
-  This is example.
+  NAME: Bowl of Petunias - GSM (bop-gsm)
+  AUTH: Oguzhan Ince (cerebnismus)
+  MAIL: <oguzhan.ince@protonmail.com>
+  DATE: July 07, 2023.
+  DESC: Send a icmp and snmp requests to a remote network nodes.
+  
+  The project is based on the Arduino SoftwareSerial library and the Sixfab_Tracker.
+  Library is a mbed library that implements the SoftwareSerial for the Arduino.
+  The SoftwareSerial library has been developed to allow serial communication 
+  on other digital pins of the Arduino, using software to replicate the functionality 
+  (hence the name "SoftwareSerial ").
+
+  https://github.com/sixfab/Sixfab_Arduino_Tracker_Shield/
   Created by Yasin Kaya (selengalp), September 11, 2018.
   Updated by Oguzhan Ince (cerebnismus), July 07, 2023.
 
+  Can be used only with the following Sixfab_Tracker functions:
+    init(), turnOnUserLED(), turnOffUserLED(), sendSMS(), sendATCommand()
+  The following functions are not supported:
+    turnOnNetworkLED(), turnOffNetworkLED(), turnOnPowerLED(), turnOffPowerLED(), 
+    turnOnGPRS(), turnOffGPRS(), turnOnGPS(), turnOffGPS(), turnOnGNSS(), turnOffGNSS(), 
+    turnOnBluetooth(), turnOffBluetooth(), turnOnBluetoothAT(), turnOffBluetoothAT(), 
 
+INSTALLATION: Arduino CLI Commands for this project (bop-eth):
 arduino-cli board list
 arduino-cli lib install "Sixfab_Tracker"
 arduino-cli lib install "SoftwareSerial@1.0.0"

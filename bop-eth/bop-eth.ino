@@ -1,12 +1,34 @@
 /*
-  This is example.
-  Created by Oguzhan Ince (cerebnismus), July 07, 2023.
+  NAME: Bowl of Petunias - Ethernet (bop-eth)
+  AUTH: Oguzhan Ince (cerebnismus) 
+  MAIL: <oguzhan.ince@protonmail.com>
+  DATE: July 07, 2023.
+  DESC: Send a icmp and snmp requests to a remote network nodes. 
+  
+  The project is based on the Arduino Ethernet library and the W5100Interface. 
+  Library is a mbed library that implements the EthernetInterface for the
+  Wiznet W5100 based Ethernet shield. The Wiznet W5100 chip supports up to
+  four simultaneous socket connections. And never supports more than 4 sockets.
 
+  https://os.mbed.com/users/hudakz/code/W5100Interface/
+  Can be used only with the following EthernetInterface socket related functions:
+    socket(), connect(), send(), recv(), close()
+  The following functions are not supported:
+    accept(), bind(), listen(), sendto(), recvfrom(), setsockopt(), getsockopt()
+
+  The default pinout can be overridden in mbed_app.json
+  The W5100Interface class uses the following pins:
+    D2  - SPI MOSI
+    D3  - SPI MISO
+    D4  - SPI SCLK
+    D10 - SPI CS
+    D7  - Wiznet W5100 reset
+
+INSTALLATION: Arduino CLI Commands for this project (bop-eth):
 arduino-cli board list
 arduino-cli lib install "Ethernet@2.0.0"
 arduino-cli lib install "SoftwareSerial@1.0.0"
 
-Compile Parameters:
 arduino-cli compile  \
   --fqbn arduino:avr:uno  \
   --port /dev/ttyUSB1  \
@@ -19,6 +41,7 @@ arduino-cli compile  \
   --verbose  \
   --clean \
   /home/pi/bowl-of-petunias/bop-eth/bop-eth.ino
+
 */
 
 #include <SPI.h>
@@ -26,12 +49,15 @@ arduino-cli compile  \
 // #include <EthernetUdp.h>
 #include <SoftwareSerial.h>
 
+// W5100 chip  !!
+
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; // Replace with your Arduino's MAC address
 IPAddress localIP(192, 168, 8, 125); // Replace with your Arduino's IP address
 IPAddress targetIP(192, 168, 8, 106); // Replace with the IP address of the target device to ping
 IPAddress remoteIP(192, 168, 8, 1); // IP address of the remote server
 
 // EthernetUDP udp;
+Ethernet Ethernet;
 EthernetClient ethClient;
 unsigned int sequenceNumber = 0;
 
@@ -41,10 +67,13 @@ void setup() {
   // udp.begin(161); // Port for UDP communication
 
   // Initialize Ethernet
+  // Returns 0 if the DHCP configuration failed, and 1 if it succeeded
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed to configure Ethernet using DHCP");
-    // set a static IP address if DHCP fails
-    Ethernet.begin(mac, IPAddress(192, 168, 8, 125));
+    // Manaul configuration
+    // Set a static IP address if DHCP fails to configure
+    // static void begin(uint8_t *mac, IPAddress ip, IPAddress dns, IPAddress gateway, IPAddress subnet);
+    Ethernet.begin(mac, IPAddress(192, 168, 8, 125), IPAddress(192, 168, 8, 1), IPAddress(255, 255, 255, 0));
   }
 
   delay(1000);
