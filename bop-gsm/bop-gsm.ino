@@ -40,7 +40,6 @@ arduino-cli compile  \
   --verbose  \
   --clean \
   /home/pi/bowl-of-petunias/bop-gsm/bop-gsm.ino
-
 */
 
 #include <SoftwareSerial.h>
@@ -70,8 +69,6 @@ void setup() {
 
   // AT command to configure GSM module for text mode SMS
   sendATCommand("AT+CMGF=1\r\n", 1000);
-
-
 }
 
 
@@ -83,6 +80,7 @@ void loop() {
     }
   }
 }
+
 
 void sendATCommand(String command, int delayTime) {
   gsmSerial.print(command);

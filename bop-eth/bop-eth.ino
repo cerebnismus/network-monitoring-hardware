@@ -41,9 +41,7 @@ arduino-cli compile  \
   --verbose  \
   --clean \
   /home/pi/bowl-of-petunias/bop-eth/bop-eth.ino
-
 */
-
 
 #include <SPI.h>
 #include <Ethernet.h>
@@ -113,12 +111,12 @@ void sendPingRequest() {
   
   byte packetBuffer[48]; // Create an Ethernet packet buffer
 
-  // Ethernet header
+  // ETHERNET HEADER
   memcpy(packetBuffer, targetmac, 6); // Destination MAC address
   memcpy(packetBuffer + 6, Ethernet.MACAddress(), 6); // Source MAC address
-  packetBuffer[12] = 0x08; // EtherType: IPv4
+  packetBuffer[12] = 0x08; // EtherType: IPv4 (0x0800) (0b00001000) (8) (IP packet)
 
-  // IP header
+  // IP HEADER
   // IHL: Internet Header Length (4 bits): Number of 32-bit words in the header
   // IHL = 5 (minimum value) (0b0101) (5 * 32 bits = 160 bits = 20 bytes)
   // High nibble: version, low nibble: header length in 32-bit words (5)
@@ -138,7 +136,7 @@ void sendPingRequest() {
   memcpy(packetBuffer + 26, localIP.raw_address(), 4);  // Source IP address
   memcpy(packetBuffer + 30, targetIP.raw_address(), 4); // Destination IP address
 
-  // ICMP header
+  // ICMP HEADER
   packetBuffer[34] = 0x08; // Type: ICMP Echo Request (8) (0x08)
   packetBuffer[35] = 0x00; // Code: 0 (0x00) is default for ICMP Echo Request (ping)
   packetBuffer[36] = 0x00; // Checksum (placeholder)          +
@@ -148,9 +146,7 @@ void sendPingRequest() {
   packetBuffer[40] = 0x00; // Sequence Number (placeholder)   -
   packetBuffer[41] = 0x00; // Sequence Number (placeholder)   -
   
-  // ICMP Echo Request Data (Aloha!) 
-  // 32 bytes total (8 x 32 bits)
-  // 0x00 is the default
+  // ICMP DATA (optional) - 32 bytes total (8 x 32 bits)
   packetBuffer[42] = 0x41; // A
   packetBuffer[43] = 0x6C; // l
   packetBuffer[44] = 0x6F; // o
@@ -161,18 +157,13 @@ void sendPingRequest() {
 
   // Calculate IP header checksum
   uint16_t ipChecksum = calculateChecksum(packetBuffer + 14, 20);
-  packetBuffer[24] = ipChecksum >> 8; // Header Checksum (high byte)
+  packetBuffer[24] = ipChecksum >> 8;   // Header Checksum (high byte)
   packetBuffer[25] = ipChecksum & 0xFF; // Header Checksum (low byte)
 
   // Calculate ICMP header checksum
   uint16_t icmpChecksum = calculateChecksum(packetBuffer + 34, 8);
-  packetBuffer[36] = icmpChecksum >> 8; // Checksum (high byte)
+  packetBuffer[36] = icmpChecksum >> 8;   // Checksum (high byte)
   packetBuffer[37] = icmpChecksum & 0xFF; // Checksum (low byte)
-
-  // Send the ICMP packet
-  // Ethernet.beginPacket(packetBuffer, sizeof(packetBuffer));
-  // Ethernet.write(packetBuffer, sizeof(packetBuffer));
-  // Ethernet.endPacket();
 
   // Send the ICMP Echo Request packet
   // Open a RAW connection to the target IP address
@@ -198,18 +189,12 @@ void sendPingRequest() {
 uint16_t calculateChecksum(const byte* data, size_t length) {
   uint32_t sum = 0;
   uint16_t* ptr = (uint16_t*)data;
-
   while (length > 1) {
     sum += *ptr++;
     length -= 2;
   }
-
-  if (length == 1) {
-    sum += *(uint8_t*)ptr;
-  }
-
+  if (length == 1) {sum += *(uint8_t*)ptr;}
   sum = (sum >> 16) + (sum & 0xFFFF);
   sum += (sum >> 16);
-  
   return ~sum;
 }
