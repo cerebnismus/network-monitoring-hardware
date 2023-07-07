@@ -57,7 +57,6 @@ IPAddress targetIP(192, 168, 8, 106); // Replace with the IP address of the targ
 IPAddress remoteIP(192, 168, 8, 1); // IP address of the remote server
 
 // EthernetUDP udp;
-Ethernet Ethernet;
 EthernetClient ethClient;
 unsigned int sequenceNumber = 0;
 
@@ -116,7 +115,7 @@ void loop() {
 
 void sendPingRequest() {
   // Create an Ethernet packet buffer
-  byte packetBuffer[64];
+  byte packetBuffer[48];
 
   // Ethernet header
   memcpy(packetBuffer, mac, 6); // Destination MAC address
@@ -124,30 +123,45 @@ void sendPingRequest() {
   packetBuffer[12] = 0x08; // EtherType: IPv4
 
   // IP header
+  // IHL: Internet Header Length (4 bits): Number of 32-bit words in the header
+  // IHL = 5 (minimum value) (0b0101) (5 * 32 bits = 160 bits = 20 bytes)
+  // High nibble: version, low nibble: header length in 32-bit words (5)
   packetBuffer[14] = 0x45; // Version (4), IHL (5)
-  packetBuffer[15] = 0x00; // Type of Service
-  packetBuffer[16] = 0x00; // Total Length (placeholder)
-  packetBuffer[17] = 0x00; // Total Length (placeholder)
-  packetBuffer[18] = 0x00; // Identification (placeholder)
-  packetBuffer[19] = 0x00; // Identification (placeholder)
-  packetBuffer[20] = 0x00; // Flags and Fragment Offset
-  packetBuffer[21] = 0x00; // Flags and Fragment Offset
+  packetBuffer[15] = 0x00; // Type of Service (0) (DSCP + ECN) (0x00) (0b00000000) (best effort)
+  packetBuffer[16] = 0x00; // Total Length (placeholder)      -
+  packetBuffer[17] = 0x00; // Total Length (placeholder)      -
+  packetBuffer[18] = 0x00; // Identification (placeholder)    -
+  packetBuffer[19] = 0x00; // Identification (placeholder)    -
+  packetBuffer[20] = 0x00; // Flags and Fragment Offset       ?
+  packetBuffer[21] = 0x00; // Flags and Fragment Offset       ?
   packetBuffer[22] = 0x40; // TTL (64)
-  packetBuffer[23] = 0x01; // Protocol: ICMP (1)
-  packetBuffer[24] = 0x00; // Header Checksum (placeholder)
-  packetBuffer[25] = 0x00; // Header Checksum (placeholder)
-  memcpy(packetBuffer + 26, localIP.raw_address(), 4); // Source IP address
+//packetBuffer[23] = 0x01; // Protocol: ICMP (1) (0x01) 
+  packetBuffer[23] = 0xFF; // Protocol: RAW (255) (0xFF)
+  packetBuffer[24] = 0x00; // Header Checksum (placeholder)   +
+  packetBuffer[25] = 0x00; // Header Checksum (placeholder)   +
+  memcpy(packetBuffer + 26, localIP.raw_address(), 4);  // Source IP address
   memcpy(packetBuffer + 30, targetIP.raw_address(), 4); // Destination IP address
 
   // ICMP header
-  packetBuffer[34] = 0x08; // Type: ICMP Echo Request
-  packetBuffer[35] = 0x00; // Code: 0
-  packetBuffer[36] = 0x00; // Checksum (placeholder)
-  packetBuffer[37] = 0x00; // Checksum (placeholder)
-  packetBuffer[38] = 0x00; // Identifier (placeholder)
-  packetBuffer[39] = 0x00; // Identifier (placeholder)
-  packetBuffer[40] = 0x00; // Sequence Number (placeholder)
-  packetBuffer[41] = 0x00; // Sequence Number (placeholder)
+  packetBuffer[34] = 0x08; // Type: ICMP Echo Request (8) (0x08)
+  packetBuffer[35] = 0x00; // Code: 0 (0x00) is default for ICMP Echo Request (ping)
+  packetBuffer[36] = 0x00; // Checksum (placeholder)          +
+  packetBuffer[37] = 0x00; // Checksum (placeholder)          +
+  packetBuffer[38] = 0x00; // Identifier (placeholder)        -
+  packetBuffer[39] = 0x00; // Identifier (placeholder)        -
+  packetBuffer[40] = 0x00; // Sequence Number (placeholder)   -
+  packetBuffer[41] = 0x00; // Sequence Number (placeholder)   -
+  
+  // ICMP Echo Request Data (Aloha!) 
+  // 32 bytes total (8 x 32 bits)
+  // 0x00 is the default
+  packetBuffer[42] = 0x41; // A
+  packetBuffer[43] = 0x6C; // l
+  packetBuffer[44] = 0x6F; // o
+  packetBuffer[45] = 0x68; // h
+  packetBuffer[46] = 0x61; // a
+  packetBuffer[47] = 0x21; // !
+
 
   // Calculate IP header checksum
   uint16_t ipChecksum = calculateChecksum(packetBuffer + 14, 20);
@@ -160,12 +174,30 @@ void sendPingRequest() {
   packetBuffer[37] = icmpChecksum & 0xFF; // Checksum (low byte)
 
   // Send the ICMP packet
-  Ethernet.beginPacket(packetBuffer, sizeof(packetBuffer));
-  Ethernet.write(packetBuffer, sizeof(packetBuffer));
-  Ethernet.endPacket();
+  // Ethernet.beginPacket(packetBuffer, sizeof(packetBuffer));
+  // Ethernet.write(packetBuffer, sizeof(packetBuffer));
+  // Ethernet.endPacket();
 
-  Serial.println("Ping sent.");
+  // Send the ICMP Echo Request packet
+  // Open a RAW connection to the target IP address
+  // Returns 1 if successful, 0 if there are no sockets available to use
+  if (!ethClient.connect(targetIP, 0)) {
+    Serial.println("Failed to open RAW connection");
+    return;
+  }
+
+  // Send the ICMP packet
+  // Returns the number of bytes written, which is always equal to the size of the packet
+  int bytesWritten = ethClient.write(packetBuffer, sizeof(packetBuffer));
+  if (bytesWritten == 0) {
+    Serial.println("Failed to write to socket");
+    return;
+  }
+
+  ethClient.stop(); // Close the RAW connection
+  Serial.println("ICMP Echo Request packet sent.");
 }
+
 
 uint16_t calculateChecksum(const byte* data, size_t length) {
   uint32_t sum = 0;
