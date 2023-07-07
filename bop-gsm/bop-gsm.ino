@@ -40,17 +40,10 @@ void setup() {
   tracker.turnOnUserLED();
   delay(1000);
 
-  // Make sure the module is connected to the network
-  if (tracker.getResponse("+COPS:")) {
-    // Send an SMS
-    tracker.sendSMS("+905304543426", "BOP!");
 
-    // Print a message to indicate that the SMS was sent
-    DEBUG.println("SMS sent successfully!");
-  } else {
-    // Print a message to indicate that the module is not connected to the network
-    DEBUG.println("Network is not connected!");
-  }
+  tracker.sendSMS("+905304543426", "BOP2!");
+  DEBUG.println("SMS sent!");
+
 }
 
 
