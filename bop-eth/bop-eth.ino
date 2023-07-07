@@ -38,7 +38,7 @@ unsigned int sequenceNumber = 0;
 void setup() {
   Ethernet.begin(mac, localIP);
   Serial.begin(9600);
-  udp.begin(161); // Port for UDP communication
+  // udp.begin(161); // Port for UDP communication
 
   // Initialize Ethernet
   if (Ethernet.begin(mac) == 0) {
@@ -53,24 +53,24 @@ void setup() {
 
   // Make a HTTP GET request to the remote server
   // In this case, request to get the router's root page
-  if (client.connect(remoteIP, 80)) {
+  if (ethClient.connect(remoteIP, 80)) {
     Serial.println("Connected to server");
-    client.println("GET / HTTP/1.1");
-    client.println("Host: 192.168.8.1"); // Replace with the actual hostname or IP address of the server
-    client.println("Connection: close");
-    client.println();
+    ethClient.println("GET / HTTP/1.1");
+    ethClient.println("Host: 192.168.8.1"); // Replace with the actual hostname or IP address of the server
+    ethClient.println("Connection: close");
+    ethClient.println();
   }
 
   delay(2000); // Wait for the server to respond
 
   // Read the response from the server
-  while (client.available()) {
-    char c = client.read();
+  while (ethClient.available()) {
+    char c = ethClient.read();
     Serial.print(c);
   }
 
   // Disconnect from the server
-  client.stop();
+  ethClient.stop();
   delay(1000);
 
 }
@@ -91,7 +91,7 @@ void sendPingRequest() {
 
   // Ethernet header
   memcpy(packetBuffer, mac, 6); // Destination MAC address
-  memcpy(packetBuffer + 6, Ethernet.macAddress(), 6); // Source MAC address
+  memcpy(packetBuffer + 6, Ethernet.MACAddress(), 6); // Source MAC address
   packetBuffer[12] = 0x08; // EtherType: IPv4
 
   // IP header
