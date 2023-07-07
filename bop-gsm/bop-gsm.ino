@@ -1,6 +1,7 @@
 /*
-  btn_led_test.ino - This is example of testing button and led.
+  This is example.
   Created by Yasin Kaya (selengalp), September 11, 2018.
+  Updated by Oguzhan Ince (cerebnismus), July 07, 2023.
 
 Compile Parameters:
 arduino-cli compile  \
@@ -15,6 +16,7 @@ arduino-cli compile  \
   --verbose  \
   --clean \
   /home/pi/bowl-of-petunias/bop-gsm/bop-gsm.ino
+
 */
 
 #include <SoftwareSerial.h>
