@@ -41,7 +41,7 @@ void setup() {
   delay(1000);
 
   // Make sure the module is connected to the network
-  if (tracker.isNetworkConnected()) {
+  if (tracker.getResponse("+COPS:")) {
     // Send an SMS
     tracker.sendSMS("+905304543426", "BOP!");
 
