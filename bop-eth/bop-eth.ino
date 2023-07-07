@@ -52,7 +52,8 @@ byte destinationMAC[] = { 0x74, 0xD2, 0x1D, 0xF3, 0xAE, 0xC7 }; // Replace with 
 byte sourceMAC[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };      // Replace with your Arduino's MAC address
 
 // IP addresses are dependent on your local network.
-IPAddress destinationIP(8, 8, 8, 8);  // Replace with the IP address of your destination node
+// IPAddress destinationIP(8, 8, 8, 8);  // Replace with the IP address of your destination node
+IPAddress destinationIP(192, 168, 8, 106);  // Replace with the IP address of your destination node
 IPAddress sourceIP(192, 168, 8, 125);       // Replace with your Arduino's IP address
 IPAddress dns(192, 168, 8, 1);              // Replace with your network's DNS address
 IPAddress gateway(192, 168, 8, 1);          // Replace with your Router's IP address
@@ -169,11 +170,17 @@ void sendPingRequest() {
   packetBuffer[36] = icmpChecksum >> 8;   // Checksum (high byte)
   packetBuffer[37] = icmpChecksum & 0xFF; // Checksum (low byte)
 
-  // Send the ICMP Echo Request packet
-  // Open a RAW connection to the target IP address
-  // Returns 1 if successful, 0 if there are no sockets available to use
-  if (!ethClient.connect(destinationIP, 0)) {
-    Serial.println("Failed to open RAW connection");
+  // Open a raw socket
+  int socket = Ethernet.socket();
+  if (socket == 1) {
+    Serial.println("Failed to open raw socket.");
+    return;
+  }
+
+  // Set the protocol to IP_RAW
+  if (Ethernet.controlSocket(socket, SOCK_RAW) == 0) {
+    Serial.println("Failed to set raw socket protocol.");
+    Ethernet.stopSocket(socket);
     return;
   }
 
