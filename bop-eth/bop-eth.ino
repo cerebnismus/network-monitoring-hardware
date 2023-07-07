@@ -50,18 +50,21 @@ arduino-cli compile  \
 #include <SoftwareSerial.h>
 
 // MAC addresses must be unique on the LAN and can be assigned by the user or generated here randomly.
-byte sourceMAC[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; // Replace with your Arduino's MAC address
-byte destinationMAC[] = { 0x74, 0xD2, 0x1D, 0xF3, 0xAE, 0xC7 }; // Replace with your Arduino's MAC address
+byte sourceMAC[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };      // Replace with your Arduino's MAC address
+byte destinationMAC[] = { 0x74, 0xD2, 0x1D, 0xF3, 0xAE, 0xC7 }; // Replace with your Router's MAC address
 
-IPAddress localIP(192, 168, 8, 125); // Replace with your Arduino's IP address
-IPAddress targetIP(192, 168, 8, 106); // Replace with the IP address of the target device to ping
-IPAddress remoteIP(192, 168, 8, 1); // IP address of the remote server
+// IP addresses are dependent on your local network.
+IPAddress sourceIP(192, 168, 8, 125);       // Replace with your Arduino's IP address
+IPAddress destinationIP(192, 168, 8, 106);  // Replace with the IP address of your destination node
+IPAddress dns(192, 168, 8, 1);              // Replace with your network's DNS address
+IPAddress gateway(192, 168, 8, 1);          // Replace with your Router's IP address
+IPAddress subnet(255, 255, 255, 0);         // Replace with your network's subnet mask
 
 EthernetClient ethClient;
 unsigned int sequenceNumber = 0;
 
 void setup() {
-  Ethernet.begin(mac, localIP);
+  Ethernet.begin(sourceMAC, sourceIP);
   Serial.begin(9600);
 
   // Initialize Ethernet, returns 0 if the DHCP configuration failed, and 1 if it succeeded
@@ -69,7 +72,7 @@ void setup() {
     Serial.println("Failed to configure Ethernet using DHCP");
     // Manaul configuration set a static IP address if DHCP fails to configure
     // static void begin(uint8_t *mac, IPAddress ip, IPAddress dns, IPAddress gateway, IPAddress subnet);
-    Ethernet.begin(mac, IPAddress(192, 168, 8, 125), IPAddress(192, 168, 8, 1), IPAddress(255, 255, 255, 0));
+    Ethernet.begin(sourceMAC, sourceIP, dns, gateway, subnet);
   }
 
   delay(1000);
@@ -77,7 +80,7 @@ void setup() {
 
   // Make a HTTP GET request to the remote server
   // In this case, request to get the router's root page
-  if (ethClient.connect(remoteIP, 80)) {
+  if (ethClient.connect(gateway, 80)) {
     Serial.println("Connected to server");
     ethClient.println("GET / HTTP/1.1");
     ethClient.println("Host: 192.168.8.1");
