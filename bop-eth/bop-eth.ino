@@ -44,33 +44,30 @@ arduino-cli compile  \
 
 */
 
+
 #include <SPI.h>
 #include <Ethernet.h>
-// #include <EthernetUdp.h>
 #include <SoftwareSerial.h>
 
-// W5100 chip  !!
+// MAC addresses must be unique on the LAN and can be assigned by the user or generated here randomly.
+byte sourceMAC[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; // Replace with your Arduino's MAC address
+byte destinationMAC[] = { 0x74, 0xD2, 0x1D, 0xF3, 0xAE, 0xC7 }; // Replace with your Arduino's MAC address
 
-byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }; // Replace with your Arduino's MAC address
 IPAddress localIP(192, 168, 8, 125); // Replace with your Arduino's IP address
 IPAddress targetIP(192, 168, 8, 106); // Replace with the IP address of the target device to ping
 IPAddress remoteIP(192, 168, 8, 1); // IP address of the remote server
 
-// EthernetUDP udp;
 EthernetClient ethClient;
 unsigned int sequenceNumber = 0;
 
 void setup() {
   Ethernet.begin(mac, localIP);
   Serial.begin(9600);
-  // udp.begin(161); // Port for UDP communication
 
-  // Initialize Ethernet
-  // Returns 0 if the DHCP configuration failed, and 1 if it succeeded
+  // Initialize Ethernet, returns 0 if the DHCP configuration failed, and 1 if it succeeded
   if (Ethernet.begin(mac) == 0) {
     Serial.println("Failed to configure Ethernet using DHCP");
-    // Manaul configuration
-    // Set a static IP address if DHCP fails to configure
+    // Manaul configuration set a static IP address if DHCP fails to configure
     // static void begin(uint8_t *mac, IPAddress ip, IPAddress dns, IPAddress gateway, IPAddress subnet);
     Ethernet.begin(mac, IPAddress(192, 168, 8, 125), IPAddress(192, 168, 8, 1), IPAddress(255, 255, 255, 0));
   }
@@ -78,29 +75,25 @@ void setup() {
   delay(1000);
   Serial.println("Ethernet connected");
 
-
   // Make a HTTP GET request to the remote server
   // In this case, request to get the router's root page
   if (ethClient.connect(remoteIP, 80)) {
     Serial.println("Connected to server");
     ethClient.println("GET / HTTP/1.1");
-    ethClient.println("Host: 192.168.8.1"); // Replace with the actual hostname or IP address of the server
+    ethClient.println("Host: 192.168.8.1");
     ethClient.println("Connection: close");
     ethClient.println();
   }
 
   delay(2000); // Wait for the server to respond
-
-  // Read the response from the server
+               // Read the response from the server
   while (ethClient.available()) {
     char c = ethClient.read();
     Serial.print(c);
   }
 
-  // Disconnect from the server
-  ethClient.stop();
-  delay(1000);
-
+  ethClient.stop(); // Disconnect from the server
+  delay(1000);      // Wait a second before continuing
 }
 
 
@@ -114,11 +107,11 @@ void loop() {
 }
 
 void sendPingRequest() {
-  // Create an Ethernet packet buffer
-  byte packetBuffer[48];
+  
+  byte packetBuffer[48]; // Create an Ethernet packet buffer
 
   // Ethernet header
-  memcpy(packetBuffer, mac, 6); // Destination MAC address
+  memcpy(packetBuffer, targetmac, 6); // Destination MAC address
   memcpy(packetBuffer + 6, Ethernet.MACAddress(), 6); // Source MAC address
   packetBuffer[12] = 0x08; // EtherType: IPv4
 
