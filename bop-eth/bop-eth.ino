@@ -41,7 +41,25 @@ arduino-cli compile  \
   --verbose  \
   --clean \
   /home/pi/bowl-of-petunias/bop-eth/bop-eth.ino
+
+
+arduino-cli compile  \
+  --fqbn arduino:avr:uno  \
+  --port /dev/ttyUSB1  \
+  --libraries /Users/macbook/Documents/bowl-of-petunias/bop-eth/libs/  \
+  --build-cache-path /Users/macbook/Documents/bowl-of-petunias/bop-eth/build-cache/  \
+  --export-binaries --warnings all  \
+  --output-dir /Users/macbook/Documents/bowl-of-petunias/bop-eth/bin/  \
+  --upload  \
+  --verify  \
+  --verbose  \
+  --clean \
+  /Users/macbook/Documents/bowl-of-petunias/bop-eth/bop-eth.ino
+
 */
+
+
+
 
 #include <SPI.h>
 #include <Ethernet.h>
