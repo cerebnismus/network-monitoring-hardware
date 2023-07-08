@@ -107,7 +107,7 @@ void loop() {
     char input = Serial.read();
     if (input == 'p') {
       sendPingRequest();
-      delay(10000); // Wait
+      delay(1000); // Wait
     }
   }
 }
@@ -171,29 +171,79 @@ void sendPingRequest() {
   packetBuffer[37] = icmpChecksum & 0xFF; // Checksum (low byte)
 
   // Open a raw socket
-  int socket = Ethernet.socket();
+  int socket = ethClient.socket();
   if (socket == 1) {
     Serial.println("Failed to open raw socket.");
     return;
   }
 
   // Set the protocol to IP_RAW
-  if (Ethernet.controlSocket(socket, SOCK_RAW) == 0) {
+  if (ethClient.controlSocket(socket, SOCK_RAW) == 0) {
     Serial.println("Failed to set raw socket protocol.");
-    Ethernet.stopSocket(socket);
+    ethClient.stopSocket(socket);
     return;
   }
 
-  // Send the ICMP packet
+
+  // Send the ICMP Echo Request packet
+  Ethernet.beginSend(socket);
+
   // Returns the number of bytes written, which is always equal to the size of the packet
   int bytesWritten = ethClient.write(packetBuffer, sizeof(packetBuffer));
   if (bytesWritten == 0) {
     Serial.println("Failed to write to socket");
     return;
   }
+  // ethClient.stop(); // Close the RAW connection
+  
+  ethClient.endSend();
 
-  ethClient.stop(); // Close the RAW connection
+
+
+
+
+
+  // Wait for the response
+  unsigned long startTime = millis();
+  while (!Ethernet.available(socket)) {
+    if (millis() - startTime > 1000) {
+      Serial.println("Timeout: No response received.");
+      Ethernet.stopSocket(socket);
+      return;
+    }
+  }
+
+  // Receive the response
+  byte responsePacket[1500];
+  int responseSize = Ethernet.recv(socket, responsePacket, sizeof(responsePacket));
+
+  // Parse the response at the IP and ICMP levels
+  IPAddress sourceIP = Ethernet.remoteIP(socket);
+  IPAddress destinationIP = Ethernet.localIP();
+  byte icmpType = responsePacket[20];
+  byte icmpCode = responsePacket[21];
+
+  // Print the response details
+  Serial.println("Ping response received:");
+  Serial.print("Source IP: ");
+  Serial.println(sourceIP);
+  Serial.print("Destination IP: ");
+  Serial.println(destinationIP);
+  Serial.print("ICMP Type: ");
+  Serial.println(icmpType);
+  Serial.print("ICMP Code: ");
+  Serial.println(icmpCode);
+
+
+
+
+  ethClient.stopSocket(socket);
   Serial.println("ICMP Echo Request packet sent.");
+
+
+  sequenceNumber++; // Increment the sequence number for the next packet
+  delay(1000); // Wait 1 second before sending the next packet
+
 }
 
 
