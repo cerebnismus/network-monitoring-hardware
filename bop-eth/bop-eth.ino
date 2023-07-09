@@ -208,15 +208,16 @@ void echoRequestReply() {
     Serial.printf("Received response length:%d", responseLength);
   }
 
-  ethClient.socketClose(socketRaw);
 
   // TODO: Parse the response at the IP and ICMP levels
   // TODO: Print the response details
 
 
-  sequenceNumber++; // Increment the sequence number for the next packet
+  // sequenceNumber++; // Increment the sequence number for the next packet
   delay(1000); // Wait 1 second before sending the next packet
 
+  ethClient.socketClose(socketRaw);
+  Serial.printf("Socket closed.\n");
 }
 
 
