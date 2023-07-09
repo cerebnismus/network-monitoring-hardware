@@ -36,7 +36,7 @@
 uint8_t EthernetUDP::begin(uint16_t port)
 {
 	if (sockindex < MAX_SOCK_NUM) Ethernet.socketClose(sockindex);
-	sockindex = Ethernet.socketBegin(SnMR::UDP, port);
+	sockindex = Ethernet.socketBegin(SnMR::IPRAW, port);
 	if (sockindex >= MAX_SOCK_NUM) return 0;
 	_port = port;
 	_remaining = 0;

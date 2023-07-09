@@ -31,14 +31,11 @@ uint16_t EthernetRAW::server_port[MAX_SOCK_NUM];
 /* Start Ethernet IPRAW socket */
 void EthernetRAW::begin()
 {
-	uint8_t sockindex = Ethernet.socketBegin(SnMR::IPRAW, _port);
-	if (sockindex < MAX_SOCK_NUM) {
-		if (Ethernet.socketListen(sockindex)) {
-			server_port[sockindex] = _port;
-		} else {
-			Ethernet.socketDisconnect(sockindex);
-		}
-	}
+  SPI.beginTransaction(SPI_ETHERNET_SETTINGS);
+  W5100.writeSnMR(0, 0x03); // Set socket 0 to IPRAW mode
+  W5100.writeSnPROTO(0, 0x01); // Set PROTO register to ICMP
+  W5100.execCmdSn(0, Sock_OPEN);
+  SPI.endTransaction();
 }
 
 
@@ -134,20 +131,13 @@ size_t EthernetRAW::write(uint8_t b)
 
 size_t EthernetRAW::write(const uint8_t *buffer, size_t size)
 {
-	uint8_t chip, maxindex=MAX_SOCK_NUM;
+	// Assuming socket 0 is used
 
-	chip = W5100.getChip();
-	if (!chip) return 0;
-#if MAX_SOCK_NUM > 4
-	if (chip == 51) maxindex = 4; // W5100 chip never supports more than 4 sockets
-#endif
-	available();
-	for (uint8_t i=0; i < maxindex; i++) {
-		if (server_port[i] == _port) {
-			if (Ethernet.socketStatus(i) == SnSR::ESTABLISHED) {
-				Ethernet.socketSend(i, buffer, size);
-			}
-		}
-	}
-	return size;
+  SPI.beginTransaction(SPI_ETHERNET_SETTINGS);
+	uint16_t txWriteAddr = W5100.readSnTX_WR(0); // Get the current write address
+	W5100.write(txWriteAddr, buffer, size); // Write your packet to the TX buffer
+	W5100.writeSnTX_WR(0, txWriteAddr + size); // update the TX write pointer
+	W5100.execCmdSn(0, Sock_SEND);
+  SPI.endTransaction();
+
 }
