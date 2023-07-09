@@ -66,6 +66,7 @@ enum EthernetHardwareStatus {
 	EthernetW5500
 };
 
+class EthernetRAW;
 class EthernetUDP;
 class EthernetClient;
 class EthernetServer;
@@ -105,18 +106,20 @@ public:
 	void setRetransmissionTimeout(uint16_t milliseconds);
 	void setRetransmissionCount(uint8_t num);
 
+	friend class EthernetRAW;
 	friend class EthernetClient;
 	friend class EthernetServer;
 	friend class EthernetUDP;
-	friend class EthernetRAW;
 public:
-	// RAW Socket !
-	static uint8_t socketRawBegin(uint8_t s, const uint8_t *data, uint16_t len);
-	static uint16_t socketSendRaw(uint8_t s, const uint8_t * buf, uint16_t len);
-	static uint16_t socketSendAvailableRaw(uint8_t s);
-	static int socketRecvRaw(uint8_t s, uint8_t * buf, int16_t len);
-	static uint16_t socketRecvAvailableRaw(uint8_t s);
-	
+
+	/* RAW 
+	static uint8_t socketBegin(uint8_t s, const uint8_t *data, uint16_t len);
+	static uint16_t socketSend(uint8_t s, const uint8_t * buf, uint16_t len);
+	static uint16_t socketSendAvailable(uint8_t s);
+	static int socketRecv(uint8_t s, uint8_t * buf, int16_t len);
+	static uint16_t socketRecvAvailable(uint8_t s);
+	*/
+
 	// Opens a socket(TCP or UDP)
 	static uint8_t socketBegin(uint8_t protocol, uint16_t port);
 	static uint8_t socketBeginMulticast(uint8_t protocol, IPAddress ip,uint16_t port);
@@ -157,23 +160,24 @@ extern EthernetClass Ethernet;
 
 
 
-class EthernetRAW : public RAW {
+class EthernetRAW {
 private:
 	uint16_t _port;
 public:
 	EthernetRAW(uint16_t port) : _port(port) { }
 	EthernetClient available();
-	EthernetClient accept();
 	virtual void begin();
 	virtual size_t write(uint8_t);
 	virtual size_t write(const uint8_t *buf, size_t size);
 	virtual operator bool();
-	using Print::write;
+	// using Print::write;
 	//void statusreport();
 
 	// TODO: make private when socket allocation moves to EthernetClass
 	static uint16_t server_port[MAX_SOCK_NUM];
 };
+
+
 
 
 
@@ -270,6 +274,7 @@ public:
 	virtual uint16_t remotePort();
 	virtual void setConnectionTimeout(uint16_t timeout) { _timeout = timeout; }
 
+	friend class EthernetRAW;
 	friend class EthernetServer;
 
 	using Print::write;

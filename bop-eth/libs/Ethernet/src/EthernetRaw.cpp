@@ -1,29 +1,23 @@
-/*
- *  Udp.cpp: Library to send/receive UDP packets with the Arduino ethernet shield.
- *  This version only offers minimal wrapping of socket.cpp
- *  Drop Udp.h/.cpp into the Ethernet library directory at hardware/libraries/Ethernet/
+/* Copyright 2018 Paul Stoffregen
+ * Copyright 2023 Oguzhan Ince
+ * Arduino RAW Socket eXtension for WizNet5100-based Ethernet shield
  *
- * MIT License:
- * Copyright (c) 2008 Bjoern Hartmann
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+ * software and associated documentation files (the "Software"), to deal in the Software
+ * without restriction, including without limitation the rights to use, copy, modify,
+ * merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following
+ * conditions:
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * bjoern@cs.stanford.edu 12/30/2008
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include <Arduino.h>
@@ -81,37 +75,6 @@ EthernetClient EthernetRAW::available()
 	return EthernetClient(sockindex);
 }
 
-EthernetClient EthernetRAW::accept()
-{
-	bool listening = false;
-	uint8_t sockindex = MAX_SOCK_NUM;
-	uint8_t chip, maxindex=MAX_SOCK_NUM;
-
-	chip = W5100.getChip();
-	if (!chip) return EthernetClient(MAX_SOCK_NUM);
-#if MAX_SOCK_NUM > 4
-	if (chip == 51) maxindex = 4; // W5100 chip never supports more than 4 sockets
-#endif
-	for (uint8_t i=0; i < maxindex; i++) {
-		if (server_port[i] == _port) {
-			uint8_t stat = Ethernet.socketStatus(i);
-			if (sockindex == MAX_SOCK_NUM &&
-			  (stat == SnSR::ESTABLISHED || stat == SnSR::CLOSE_WAIT)) {
-				// Return the connected client even if no data received.
-				// Some protocols like FTP expect the server to send the
-				// first data.
-				sockindex = i;
-				server_port[i] = 0; // only return the client once
-			} else if (stat == SnSR::LISTEN) {
-				listening = true;
-			} else if (stat == SnSR::CLOSED) {
-				server_port[i] = 0;
-			}
-		}
-	}
-	if (!listening) begin();
-	return EthernetClient(sockindex);
-}
 
 EthernetRAW::operator bool()
 {

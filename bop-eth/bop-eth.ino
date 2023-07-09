@@ -51,6 +51,19 @@ arduino-cli compile  \
 #include "/Users/macbook/Documents/bowl-of-petunias/bop-eth/libs/Ethernet/src/Ethernet.h"
 #include <SoftwareSerial.h>
 
+uint16_t calculateChecksum(const byte* data, size_t length) {
+  uint32_t sum = 0;
+  uint16_t* ptr = (uint16_t*)data;
+  while (length > 1) {
+    sum += *ptr++;
+    length -= 2;
+  }
+  if (length == 1) {sum += *(uint8_t*)ptr;}
+  sum = (sum >> 16) + (sum & 0xFFFF);
+  sum += (sum >> 16);
+  return ~sum;
+}
+
 // MAC addresses must be unique on the LAN and can be assigned by the user or generated here randomly.
 byte destinationMAC[] = { 0x74, 0xD2, 0x1D, 0xF3, 0xAE, 0xC7 }; // Replace with your Router's MAC address
 byte sourceMAC[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };      // Replace with your Arduino's MAC address
@@ -67,8 +80,7 @@ unsigned int sequenceNumber = 0;
 unsigned int ethernetInitVal = 0;
 
 // Workaround solution
-EthernetUDP EthernetRAW;
-
+EthernetRAW raw(0);
 
 void setup() {
 
@@ -95,7 +107,7 @@ void setup() {
 void loop() {
 
   echoRequestReply();
-  delay(10000); // Wait a second before continuing
+  delay(1000); // Wait a second before continuing
 
 /*
   if (Serial.available()) {
@@ -168,68 +180,37 @@ void echoRequestReply() {
   packetBuffer[36] = icmpChecksum >> 8;   // Checksum (high byte)
   packetBuffer[37] = icmpChecksum & 0xFF; // Checksum (low byte)
 
-  // Open a socket beginRAW
+
+  // Open a socket
   // Returns 1 if successful, 0 if there are no sockets available to use
-  uint16_t socketRaw = EthernetRAW.beginRAW();
-  Serial.println(socketRaw);
-  
+  raw.begin(); 
 
   // Calculate lengt of packetBuffer with null terminator '\0' < 2048
   // Number of bytes written, which is always equal to the size of the packet
   uint16_t packetBufferLenNull = strlen(packetBuffer) + 1;
   uint16_t packetBufferMaxLenNull = strlen(packetBuffer) + 1;
 
-  // Send the ICMP Echo Request packet 
   // TODO: Customize socketSendAvailable for multiplexing
-  Ethernet.socketSend(socketRaw, packetBuffer, packetBufferLenNull);
+
+  // Send the ICMP Echo Request packet 
+  raw.write(packetBuffer, packetBufferLenNull);
   Serial.println("ICMP Echo Request packet sent.\n");
 
-
   // Wait for the response
-  unsigned long startTime = millis();
-  while (!Ethernet.socketRecvAvailable(socketRaw)) {
-    if (millis() - startTime > 1000) {
-      Serial.println("Timeout: No response received.\n");
-      Ethernet.socketClose(socketRaw);
-      return;
-    }
-  }
+  EthernetClient client = raw.available();
+	// Serial.printf("EthernetRAW, port=%d\n", client);
 
-  // Receive the response data
-  // Returns size, or -1 for no data, or 0 if connection closed
-  uint16_t responseLength = Ethernet.socketRecv(socketRaw, packetBufferMax, packetBufferMaxLenNull);
-  if (responseLength == 0) {
-    Serial.println("Connection closed.");
-  }
-  else if (responseLength == -1) {
-    Serial.println("No response received.");
-  }
-  else {
-    Serial.println("Received response length:%d", responseLength);
-  }
-
+  if (client.available() > 0) {
+    char thisChar = client.read();
+    Serial.println("ICMP Echo Reply packet received.\n");
 
   // TODO: Parse the response at the IP and ICMP levels
   // TODO: Print the response details
 
-
-  // sequenceNumber++; // Increment the sequence number for the next packet
+  sequenceNumber++; // Increment the sequence number for the next packet
   delay(1000); // Wait 1 second before sending the next packet
 
-  Ethernet.socketClose(socketRaw);
+  Ethernet.socketDisconnect(client);
   Serial.println("Socket closed.\n");
-}
-
-
-uint16_t calculateChecksum(const byte* data, size_t length) {
-  uint32_t sum = 0;
-  uint16_t* ptr = (uint16_t*)data;
-  while (length > 1) {
-    sum += *ptr++;
-    length -= 2;
   }
-  if (length == 1) {sum += *(uint8_t*)ptr;}
-  sum = (sum >> 16) + (sum & 0xFFFF);
-  sum += (sum >> 16);
-  return ~sum;
 }
