@@ -47,8 +47,12 @@ arduino-cli compile  \
 // the remote host is left unaware we closed.
 
 #include <SPI.h>
-#include <Ethernet.h>
 #include <SoftwareSerial.h>
+
+#include <Ethernet.h>
+#include <EthernetClient.h>
+#include <EthernetServer.h>
+#include <Dhcp.h>
 
 uint16_t calculateChecksum(const byte* data, size_t length) {
   uint32_t sum = 0;
@@ -79,7 +83,7 @@ unsigned int sequenceNumber = 0;
 unsigned int ethernetInitVal = 0;
 
 // Workaround solution
-EthernetRAW raw(0);
+EthernetRAW raw(7);
 
 void setup() {
 
@@ -221,13 +225,7 @@ void echoRequestReply() {
   raw.write(packetBuffer, packetBufferLenNull);
   Serial.println("ICMP Echo Request packet sent.\n");
 
-  // Wait for the response
-  EthernetClient client = raw.available();
-	// Serial.printf("EthernetRAW, port=%d\n", client);
 
-  if (client.available() > 0) {
-    char thisChar = client.read();
-    Serial.println("ICMP Echo Reply packet received.\n");
 
   // TODO: Parse the response at the IP and ICMP levels
   // TODO: Print the response details
