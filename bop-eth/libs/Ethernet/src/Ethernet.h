@@ -110,6 +110,7 @@ public:
 	friend class EthernetUDP;
 private:
 	// Opens a socket(TCP or UDP or IP_RAW mode)
+	static uint8_t socketRawBegin
 	static uint8_t socketBegin(uint8_t protocol, uint16_t port);
 	static uint8_t socketBeginMulticast(uint8_t protocol, IPAddress ip,uint16_t port);
 	static uint8_t socketStatus(uint8_t s);
@@ -121,9 +122,10 @@ private:
 	static void socketDisconnect(uint8_t s);
 	// Establish TCP connection (Passive connection)
 	static uint8_t socketListen(uint8_t s);
-	// Send data (TCP)
+	// Send data (TCP or RAW)
 	static uint16_t socketSend(uint8_t s, const uint8_t * buf, uint16_t len);
 	static uint16_t socketSendAvailable(uint8_t s);
+	
 	// Receive data (TCP)
 	static int socketRecv(uint8_t s, uint8_t * buf, int16_t len);
 	static uint16_t socketRecvAvailable(uint8_t s);

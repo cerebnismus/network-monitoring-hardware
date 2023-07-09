@@ -45,7 +45,7 @@ arduino-cli compile  \
 
 arduino-cli compile  \
   --fqbn arduino:avr:uno  \
-  --port /dev/ttyUSB1  \
+  --port /dev/cu.usbserial-14120  \
   --libraries /Users/macbook/Documents/bowl-of-petunias/bop-eth/libs/  \
   --build-cache-path /Users/macbook/Documents/bowl-of-petunias/bop-eth/build-cache/  \
   --export-binaries --warnings all  \
@@ -80,6 +80,7 @@ IPAddress subnet(255, 255, 255, 0);         // Replace with your network's subne
 EthernetClient ethClient;
 unsigned int sequenceNumber = 0;
 
+
 void setup() {
   Ethernet.begin(sourceMAC);
   Serial.begin(9600);
@@ -94,29 +95,7 @@ void setup() {
 
   delay(1000);
   Serial.println("Ethernet connected");
-
-/*
-  // Make a HTTP GET request to the remote server
-  // In this case, request to get the router's root page
-  if (ethClient.connect(gateway, 80)) {
-    Serial.println("Connected to server");
-    ethClient.println("GET / HTTP/1.1");
-    ethClient.println("Host: 8.8.8.8");
-    ethClient.println("Connection: close");
-    ethClient.println();
-  }
-
-  delay(2000); // Wait for the server to respond
-               // Read the response from the server
-  while (ethClient.available()) {
-    char c = ethClient.read();
-    Serial.print(c);
-  }
-
-  ethClient.stop(); // Disconnect from the server
-*/
-
-  delay(1000);      // Wait a second before continuing
+  delay(1000); // Wait a second before continuing
 }
 
 
@@ -129,6 +108,7 @@ void loop() {
     }
   }
 }
+
 
 void sendPingRequest() {
   
@@ -177,7 +157,6 @@ void sendPingRequest() {
   packetBuffer[46] = 0x61; // a
   packetBuffer[47] = 0x21; // !
 
-
   // Calculate IP header checksum
   uint16_t ipChecksum = calculateChecksum(packetBuffer + 14, 20);
   packetBuffer[24] = ipChecksum >> 8;   // Header Checksum (high byte)
@@ -189,7 +168,7 @@ void sendPingRequest() {
   packetBuffer[37] = icmpChecksum & 0xFF; // Checksum (low byte)
 
   // Open a raw socket
-  int socket = ethClient.socket();
+  int socket = ethClient.socketRawBegin();
   if (socket == 1) {
     Serial.println("Failed to open raw socket.");
     return;
