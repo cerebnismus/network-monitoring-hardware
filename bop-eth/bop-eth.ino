@@ -167,7 +167,7 @@ void echoRequestReply() {
 
   // Open a socket raw
   uint16_t socketRaw = Ethernet.socketRawBegin();
-  Serial.print("sock:%d\n", socketRaw)
+  Serial.println("sock:%d\n", socketRaw)
   
 
   // Calculate lengt of packetBuffer with null terminator '\0' < 2048
@@ -178,14 +178,14 @@ void echoRequestReply() {
   // Send the ICMP Echo Request packet 
   // TODO: Customize socketSendAvailable for multiplexing
   Ethernet.socketSend(socketRaw, packetBuffer, packetBufferLenNull);
-  Serial.print("ICMP Echo Request packet sent.\n");
+  Serial.println("ICMP Echo Request packet sent.\n");
 
 
   // Wait for the response
   unsigned long startTime = millis();
   while (!Ethernet.socketRecvAvailable(socketRaw)) {
     if (millis() - startTime > 1000) {
-      Serial.print("Timeout: No response received.\n");
+      Serial.println("Timeout: No response received.\n");
       Ethernet.socketClose(socketRaw);
       return;
     }
@@ -195,13 +195,13 @@ void echoRequestReply() {
   // Returns size, or -1 for no data, or 0 if connection closed
   uint16_t responseLength = Ethernet.socketRecv(socketRaw, packetBufferMax, packetBufferMaxLenNull);
   if (responseLength == 0) {
-    Serial.print("Connection closed.");
+    Serial.println("Connection closed.");
   }
   else if (responseLength == -1) {
-    Serial.print("No response received.");
+    Serial.println("No response received.");
   }
   else {
-    Serial.print("Received response length:%d", responseLength);
+    Serial.println("Received response length:%d", responseLength);
   }
 
 
@@ -213,7 +213,7 @@ void echoRequestReply() {
   delay(1000); // Wait 1 second before sending the next packet
 
   Ethernet.socketClose(socketRaw);
-  Serial.print("Socket closed.\n");
+  Serial.println("Socket closed.\n");
 }
 
 
