@@ -29,14 +29,16 @@ uint16_t EthernetRAW::server_port[MAX_SOCK_NUM];
 
 
 /* Start Ethernet IPRAW socket */
-uint8_t EthernetRAW::begin()
+void EthernetRAW::begin()
 {
-	if (sockindex < MAX_SOCK_NUM) Ethernet.socketClose(sockindex);
-	sockindex = Ethernet.socketBegin(SnMR::IPRAW, _port);
-	if (sockindex >= MAX_SOCK_NUM) return 0;
-	_port = 0;
-	_remaining = 0;
-	return 1;
+	uint8_t sockindex = Ethernet.socketBegin(SnMR::IPRAW, _port);
+	if (sockindex < MAX_SOCK_NUM) {
+		if (Ethernet.socketListen(sockindex)) {
+			server_port[sockindex] = _port;
+		} else {
+			Ethernet.socketDisconnect(sockindex);
+		}
+	}
 }
 
 

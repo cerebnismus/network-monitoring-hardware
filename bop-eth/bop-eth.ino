@@ -65,7 +65,7 @@ uint16_t calculateChecksum(const byte* data, size_t length) {
 
 // MAC addresses must be unique on the LAN and can be assigned by the user or generated here randomly.
 byte destinationMAC[] = { 0x74, 0xD2, 0x1D, 0xF3, 0xAE, 0xC7 }; // Replace with your Router's MAC address
-byte sourceMAC[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };      // Replace with your Arduino's MAC address
+byte sourceMAC[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE };      // Replace with your Arduino's MAC address
 
 // IP addresses are dependent on your local network.
 // IPAddress destinationIP(8, 8, 8, 8);  // Replace with the IP address of your destination node
@@ -85,25 +85,48 @@ void setup() {
 
   ethernetInitVal = Ethernet.begin(sourceMAC);
   Serial.begin(9600);
-  delay(1000); // Wait a second before continuing
+
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
 
   // Initialize Ethernet, returns 0 if the DHCP configuration failed, and 1 if it succeeded
   if (ethernetInitVal == 0) {
+
     Serial.println("Failed to configure Ethernet using DHCP");
+
     // Manaul configuration set a static IP address if DHCP fails to configure
     // static void begin(uint8_t *mac, IPAddress ip, IPAddress dns, IPAddress gateway, IPAddress subnet);
-    Ethernet.begin(sourceMAC, sourceIP, dns, gateway, subnet);
+    Ethernet.begin(sourceMAC, sourceIP);
+    // Ethernet.begin(sourceMAC, sourceIP, dns, gateway, subnet);
+
     delay(1000); // Wait a second before continuing
-    if (ethernetInitVal == 0) {
-      Serial.println("Failed to configure Ethernet using static IP");
-    }
+
+    Serial.println("Configuring ethernet using static IP");
   }
+
   delay(1000); // Wait a second before continuing
   Serial.println("Ethernet connected");
 }
 
 
 void loop() {
+
+  // Check for Ethernet hardware present
+  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+    Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
+    while (true) {
+      delay(1); // do nothing, no point running without Ethernet hardware
+    }
+  }
+  while (Ethernet.linkStatus() == LinkOFF) {
+    Serial.println("Ethernet cable is not connected.");
+    delay(500);
+  }
+
+  // give the Ethernet shield a second to initialize:
+  delay(1000);
+  Serial.println("connecting...");
 
   echoRequestReply();
   delay(1000); // Wait a second before continuing
@@ -182,14 +205,17 @@ void echoRequestReply() {
 
   // Open a socket
   // Returns 1 if successful, 0 if there are no sockets available to use
-  raw.begin(); 
+  // if you get a connection, report back via serial:
+  raw.begin();
 
   // Calculate lengt of packetBuffer with null terminator '\0' < 2048
   // Number of bytes written, which is always equal to the size of the packet
   uint16_t packetBufferLenNull = strlen(packetBuffer) + 1;
   uint16_t packetBufferMaxLenNull = strlen(packetBuffer) + 1;
 
+
   // TODO: Customize socketSendAvailable for multiplexing
+
 
   // Send the ICMP Echo Request packet 
   raw.write(packetBuffer, packetBufferLenNull);

@@ -31,16 +31,6 @@
 #include "Dns.h"
 #include "utility/w5100.h"
 
-/* Start EthernetIPRAW socket */
-uint8_t EthernetUDP::beginRAW()
-{
-	if (sockindex < MAX_SOCK_NUM) Ethernet.socketClose(sockindex);
-	sockindex = Ethernet.socketRawBegin(SnMR::IPRAW);
-	if (sockindex >= MAX_SOCK_NUM) return 0;
-	_port = 0;
-	_remaining = 0;
-	return 1;
-}
 
 /* Start EthernetUDP socket, listening at local port PORT */
 uint8_t EthernetUDP::begin(uint16_t port)
