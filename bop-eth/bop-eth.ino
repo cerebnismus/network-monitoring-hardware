@@ -47,8 +47,7 @@ arduino-cli compile  \
 // the remote host is left unaware we closed.
 
 #include <SPI.h>
-// #include <Ethernet.h>
-#include "/Users/macbook/Documents/bowl-of-petunias/bop-eth/libs/Ethernet/src/Ethernet.h"
+#include <Ethernet.h>
 #include <SoftwareSerial.h>
 
 uint16_t calculateChecksum(const byte* data, size_t length) {
@@ -210,7 +209,7 @@ void echoRequestReply() {
   sequenceNumber++; // Increment the sequence number for the next packet
   delay(1000); // Wait 1 second before sending the next packet
 
-  Ethernet.socketDisconnect(client);
-  Serial.println("Socket closed.\n");
+  // Ethernet.socketDisconnect(client);
+  // Serial.println("Socket closed.\n");
   }
 }
