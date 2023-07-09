@@ -74,10 +74,7 @@ byte sourceMAC[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE };      // Replace with 
 // IP addresses are dependent on your local network.
 // IPAddress destinationIP(8, 8, 8, 8);  // Replace with the IP address of your destination node
 IPAddress destinationIP(192, 168, 8, 106);  // Replace with the IP address of your destination node
-IPAddress sourceIP(192, 168, 8, 125);       // Replace with your Arduino's IP address
-IPAddress dns(192, 168, 8, 1);              // Replace with your network's DNS address
-IPAddress gateway(192, 168, 8, 1);          // Replace with your Router's IP address
-IPAddress subnet(255, 255, 255, 0);         // Replace with your network's subnet mask
+IPAddress sourceIP(192, 168, 8, 129);       // Replace with your Arduino's IP address
 
 unsigned int sequenceNumber = 0;
 unsigned int ethernetInitVal = 0;
@@ -87,7 +84,7 @@ EthernetRAW raw(7);
 
 void setup() {
 
-  ethernetInitVal = Ethernet.begin(sourceMAC);
+  ethernetInitVal = Ethernet.begin(sourceMAC, sourceIP);
   Serial.begin(9600);
 
   while (!Serial) {
