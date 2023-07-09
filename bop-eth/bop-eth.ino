@@ -43,6 +43,8 @@ arduino-cli compile  \
 
 */
 
+// socketClose function immediately close socket.  
+// the remote host is left unaware we closed.
 
 #include <SPI.h>
 #include <Ethernet.h>
@@ -60,7 +62,6 @@ IPAddress dns(192, 168, 8, 1);              // Replace with your network's DNS a
 IPAddress gateway(192, 168, 8, 1);          // Replace with your Router's IP address
 IPAddress subnet(255, 255, 255, 0);         // Replace with your network's subnet mask
 
-EthernetClient ethClient;
 unsigned int sequenceNumber = 0;
 unsigned int ethernetInitVal = 0;
 
@@ -165,8 +166,8 @@ void echoRequestReply() {
   packetBuffer[37] = icmpChecksum & 0xFF; // Checksum (low byte)
 
   // Open a socket raw
-  uint16_t socketRaw = ethClient.socketRawBegin();
-  Serial.printf("sock:%d\n", socketRaw)
+  uint16_t socketRaw = Ethernet.socketRawBegin();
+  Serial.print("sock:%d\n", socketRaw)
   
 
   // Calculate lengt of packetBuffer with null terminator '\0' < 2048
@@ -176,36 +177,31 @@ void echoRequestReply() {
 
   // Send the ICMP Echo Request packet 
   // TODO: Customize socketSendAvailable for multiplexing
-  ethClient.socketSend(socketRaw, packetBuffer, packetBufferLenNull);
-  Serial.printf("ICMP Echo Request packet sent.\n");
+  Ethernet.socketSend(socketRaw, packetBuffer, packetBufferLenNull);
+  Serial.print("ICMP Echo Request packet sent.\n");
 
 
   // Wait for the response
   unsigned long startTime = millis();
-  while (!ethClient.socketRecvAvailable(socketRaw)) {
+  while (!Ethernet.socketRecvAvailable(socketRaw)) {
     if (millis() - startTime > 1000) {
-      Serial.printf("Timeout: No response received.\n");
-      // Immediately close socket.  If a TCP connection is established, the
-      // remote host is left unaware we closed.
-      // ethClient.socketClose(socketRaw);
-      SPI.beginTransaction(SPI_ETHERNET_SETTINGS);
-      W5100.execCmdSn(socketRaw, Sock_CLOSE);
-      SPI.endTransaction();
+      Serial.print("Timeout: No response received.\n");
+      Ethernet.socketClose(socketRaw);
       return;
     }
   }
 
   // Receive the response data
   // Returns size, or -1 for no data, or 0 if connection closed
-  uint16_t responseLength = ethClient.socketRecv(socketRaw, packetBufferMax, packetBufferMaxLenNull);
+  uint16_t responseLength = Ethernet.socketRecv(socketRaw, packetBufferMax, packetBufferMaxLenNull);
   if (responseLength == 0) {
-    Serial.printf("Connection closed.");
+    Serial.print("Connection closed.");
   }
   else if (responseLength == -1) {
-    Serial.printf("No response received.");
+    Serial.print("No response received.");
   }
   else {
-    Serial.printf("Received response length:%d", responseLength);
+    Serial.print("Received response length:%d", responseLength);
   }
 
 
@@ -216,8 +212,8 @@ void echoRequestReply() {
   // sequenceNumber++; // Increment the sequence number for the next packet
   delay(1000); // Wait 1 second before sending the next packet
 
-  ethClient.socketClose(socketRaw);
-  Serial.printf("Socket closed.\n");
+  Ethernet.socketClose(socketRaw);
+  Serial.print("Socket closed.\n");
 }
 
 
