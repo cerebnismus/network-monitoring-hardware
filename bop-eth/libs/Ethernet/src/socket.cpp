@@ -57,7 +57,6 @@ static void read_data(uint8_t s, uint16_t src, uint8_t *dst, uint16_t len);
 
 /**
  * @brief	This function used to create in RAW mode
- * @return	1 for success else 0.
  */
 void EthernetClass::socketRawBegin(uint8_t s, const uint8_t *data, uint16_t len)
 {
@@ -138,14 +137,12 @@ makesocket:
 		freesizeval = (freesize & 0xff) << 8 | (freesize & 0xff00) >> 8;
 		Serial.printf("W5100 socket freesizeval=%d\n", freesizeval);
 	}
-
 	return s;
 }
 
 /*****************************************/
 /*          Socket management            */
 /*****************************************/
-
 
 void EthernetClass::socketPortRand(uint16_t n)
 {
@@ -450,7 +447,7 @@ uint16_t EthernetClass::socketRecvAvailable(uint8_t s)
 		SPI.endTransaction();
 		ret = rsr - state[s].RX_inc;
 		state[s].RX_RSR = ret;
-		//Serial.printf("sockRecvAvailable s=%d, RX_RSR=%d\n", s, ret);
+		Serial.printf("sockRecvAvailable s=%d, RX_RSR=%d\n", s, ret);
 	}
 	return ret;
 }

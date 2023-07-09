@@ -10,20 +10,6 @@
   Wiznet W5100 based Ethernet shield. The Wiznet W5100 chip supports up to
   four simultaneous socket connections. And never supports more than 4 sockets.
 
-  https://os.mbed.com/users/hudakz/code/W5100Interface/
-  Can be used only with the following EthernetInterface socket related functions:
-    socket(), connect(), send(), recv(), close()
-  The following functions are not supported:
-    accept(), bind(), listen(), sendto(), recvfrom(), setsockopt(), getsockopt()
-
-  The default pinout can be overridden in mbed_app.json
-  The W5100Interface class uses the following pins:
-    D2  - SPI MOSI
-    D3  - SPI MISO
-    D4  - SPI SCLK
-    D10 - SPI CS
-    D7  - Wiznet W5100 reset
-
 INSTALLATION: Arduino CLI Commands for this project (bop-eth):
 arduino-cli board list
 arduino-cli lib install "Ethernet@2.0.0"
@@ -42,7 +28,6 @@ arduino-cli compile  \
   --clean \
   /home/pi/bowl-of-petunias/bop-eth/bop-eth.ino
 
-
 arduino-cli compile  \
   --fqbn arduino:avr:uno  \
   --port /dev/cu.usbserial-14120  \
@@ -57,8 +42,6 @@ arduino-cli compile  \
   /Users/macbook/Documents/bowl-of-petunias/bop-eth/bop-eth.ino
 
 */
-
-
 
 
 #include <SPI.h>
@@ -79,27 +62,38 @@ IPAddress subnet(255, 255, 255, 0);         // Replace with your network's subne
 
 EthernetClient ethClient;
 unsigned int sequenceNumber = 0;
+unsigned int ethernetInitVal = 0;
 
 
 void setup() {
-  Ethernet.begin(sourceMAC);
+
+  ethernetInitVal = Ethernet.begin(sourceMAC);
   Serial.begin(9600);
+  delay(1000); // Wait a second before continuing
 
   // Initialize Ethernet, returns 0 if the DHCP configuration failed, and 1 if it succeeded
-  if (Ethernet.begin(sourceMAC) == 0) {
+  if (ethernetInitVal == 0) {
     Serial.println("Failed to configure Ethernet using DHCP");
     // Manaul configuration set a static IP address if DHCP fails to configure
     // static void begin(uint8_t *mac, IPAddress ip, IPAddress dns, IPAddress gateway, IPAddress subnet);
     Ethernet.begin(sourceMAC, sourceIP, dns, gateway, subnet);
+    delay(1000); // Wait a second before continuing
+    if (ethernetInitVal == 0) {
+      Serial.println("Failed to configure Ethernet using static IP");
+      break;
+    }
   }
-
-  delay(1000);
-  Serial.println("Ethernet connected");
   delay(1000); // Wait a second before continuing
+  Serial.println("Ethernet connected");
 }
 
 
 void loop() {
+
+  echoRequestReply();
+  delay(10000); // Wait a second before continuing
+
+/*
   if (Serial.available()) {
     char input = Serial.read();
     if (input == 'p') {
@@ -107,16 +101,19 @@ void loop() {
       delay(1000); // Wait
     }
   }
+*/
+
 }
 
 
-void sendPingRequest() {
-  
-  byte packetBuffer[48]; // Create an Ethernet packet buffer
+void echoRequestReply() {
+
+  byte packetBuffer[48];      // Create an Ethernet packet buffer - send
+  byte packetBufferMax[2046]; // Create an Ethernet packet buffer - recv
 
   // ETHERNET HEADER
-  memcpy(packetBuffer, destinationMAC, 6); // Destination MAC address
-  memcpy(packetBuffer + 6, sourceMAC, 6); // Source MAC address
+  memcpy(packetBuffer, destinationMAC, 6);  // Destination MAC address
+  memcpy(packetBuffer + 6, sourceMAC, 6);   // Source MAC address
   packetBuffer[12] = 0x08; // EtherType: IPv4 (0x0800) (0b00001000) (8) (IP packet)
 
   // IP HEADER
@@ -167,75 +164,54 @@ void sendPingRequest() {
   packetBuffer[36] = icmpChecksum >> 8;   // Checksum (high byte)
   packetBuffer[37] = icmpChecksum & 0xFF; // Checksum (low byte)
 
-  // Open a raw socket
-  int socket = ethClient.socketRawBegin();
-  if (socket == 1) {
-    Serial.println("Failed to open raw socket.");
-    return;
-  }
-
-  // Set the protocol to IP_RAW
-  if (ethClient.controlSocket(socket, SOCK_RAW) == 0) {
-    Serial.println("Failed to set raw socket protocol.");
-    ethClient.stopSocket(socket);
-    return;
-  }
-
-
-  // Send the ICMP Echo Request packet
-  Ethernet.beginSend(socket);
-
-  // Returns the number of bytes written, which is always equal to the size of the packet
-  int bytesWritten = ethClient.write(packetBuffer, sizeof(packetBuffer));
-  if (bytesWritten == 0) {
-    Serial.println("Failed to write to socket");
-    return;
-  }
-  // ethClient.stop(); // Close the RAW connection
+  // Open a socket raw
+  uint16_t socketRaw = ethClient.socketRawBegin();
+  Serial.printf("sock:%d\n", socketRaw)
   
-  ethClient.endSend();
 
+  // Calculate lengt of packetBuffer with null terminator '\0' < 2048
+  // Number of bytes written, which is always equal to the size of the packet
+  uint16_t packetBufferLenNull = strlen(packetBuffer) + 1;
+  uint16_t packetBufferMaxLenNull = strlen(packetBuffer) + 1;
 
-
-
+  // Send the ICMP Echo Request packet 
+  // TODO: Customize socketSendAvailable for multiplexing
+  ethClient.socketSend(socketRaw, packetBuffer, packetBufferLenNull);
+  Serial.printf("ICMP Echo Request packet sent.\n");
 
 
   // Wait for the response
   unsigned long startTime = millis();
-  while (!Ethernet.available(socket)) {
+  while (!ethClient.socketRecvAvailable(socketRaw)) {
     if (millis() - startTime > 1000) {
-      Serial.println("Timeout: No response received.");
-      Ethernet.stopSocket(socket);
+      Serial.printf("Timeout: No response received.\n");
+      // Immediately close socket.  If a TCP connection is established, the
+      // remote host is left unaware we closed.
+      // ethClient.socketClose(socketRaw);
+      SPI.beginTransaction(SPI_ETHERNET_SETTINGS);
+      W5100.execCmdSn(socketRaw, Sock_CLOSE);
+      SPI.endTransaction();
       return;
     }
   }
 
-  // Receive the response
-  byte responsePacket[1500];
-  int responseSize = Ethernet.recv(socket, responsePacket, sizeof(responsePacket));
+  // Receive the response data
+  // Returns size, or -1 for no data, or 0 if connection closed
+  uint16_t responseLength = ethClient.socketRecv(socketRaw, packetBufferMax, packetBufferMaxLenNull);
+  if (responseLength == 0) {
+    Serial.printf("Connection closed.");
+  }
+  else if (responseLength == -1) {
+    Serial.printf("No response received.");
+  }
+  else {
+    Serial.printf("Received response length:%d", responseLength);
+  }
 
-  // Parse the response at the IP and ICMP levels
-  IPAddress sourceIP = Ethernet.remoteIP(socket);
-  IPAddress destinationIP = Ethernet.localIP();
-  byte icmpType = responsePacket[20];
-  byte icmpCode = responsePacket[21];
+  ethClient.socketClose(socketRaw);
 
-  // Print the response details
-  Serial.println("Ping response received:");
-  Serial.print("Source IP: ");
-  Serial.println(sourceIP);
-  Serial.print("Destination IP: ");
-  Serial.println(destinationIP);
-  Serial.print("ICMP Type: ");
-  Serial.println(icmpType);
-  Serial.print("ICMP Code: ");
-  Serial.println(icmpCode);
-
-
-
-
-  ethClient.stopSocket(socket);
-  Serial.println("ICMP Echo Request packet sent.");
+  // TODO: Parse the response at the IP and ICMP levels
+  // TODO: Print the response details
 
 
   sequenceNumber++; // Increment the sequence number for the next packet
