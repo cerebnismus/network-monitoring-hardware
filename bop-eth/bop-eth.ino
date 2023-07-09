@@ -47,7 +47,8 @@ arduino-cli compile  \
 // the remote host is left unaware we closed.
 
 #include <SPI.h>
-#include <Ethernet.h>
+// #include <Ethernet.h>
+#include "/Users/macbook/Documents/bowl-of-petunias/bop-eth/libs/Ethernet/src/Ethernet.h"
 #include <SoftwareSerial.h>
 
 // MAC addresses must be unique on the LAN and can be assigned by the user or generated here randomly.
@@ -65,6 +66,9 @@ IPAddress subnet(255, 255, 255, 0);         // Replace with your network's subne
 unsigned int sequenceNumber = 0;
 unsigned int ethernetInitVal = 0;
 
+// Workaround solution
+EthernetUDP EthernetRAW;
+
 
 void setup() {
 
@@ -81,7 +85,6 @@ void setup() {
     delay(1000); // Wait a second before continuing
     if (ethernetInitVal == 0) {
       Serial.println("Failed to configure Ethernet using static IP");
-      break;
     }
   }
   delay(1000); // Wait a second before continuing
@@ -165,9 +168,10 @@ void echoRequestReply() {
   packetBuffer[36] = icmpChecksum >> 8;   // Checksum (high byte)
   packetBuffer[37] = icmpChecksum & 0xFF; // Checksum (low byte)
 
-  // Open a socket raw
-  uint16_t socketRaw = Ethernet.socketRawBegin();
-  Serial.println("sock:%d\n", socketRaw)
+  // Open a socket beginRAW
+  // Returns 1 if successful, 0 if there are no sockets available to use
+  uint16_t socketRaw = EthernetRAW.beginRAW();
+  Serial.println(socketRaw);
   
 
   // Calculate lengt of packetBuffer with null terminator '\0' < 2048

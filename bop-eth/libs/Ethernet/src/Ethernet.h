@@ -108,9 +108,16 @@ public:
 	friend class EthernetClient;
 	friend class EthernetServer;
 	friend class EthernetUDP;
-private:
-	// Opens a socket(TCP or UDP or IP_RAW mode ?)
-	static uint8_t socketRawBegin(uint8_t s, const uint8_t *data, uint16_t len)
+	friend class EthernetRAW;
+public:
+	// RAW Socket !
+	static uint8_t socketRawBegin(uint8_t s, const uint8_t *data, uint16_t len);
+	static uint16_t socketSendRaw(uint8_t s, const uint8_t * buf, uint16_t len);
+	static uint16_t socketSendAvailableRaw(uint8_t s);
+	static int socketRecvRaw(uint8_t s, uint8_t * buf, int16_t len);
+	static uint16_t socketRecvAvailableRaw(uint8_t s);
+	
+	// Opens a socket(TCP or UDP)
 	static uint8_t socketBegin(uint8_t protocol, uint16_t port);
 	static uint8_t socketBeginMulticast(uint8_t protocol, IPAddress ip,uint16_t port);
 	static uint8_t socketStatus(uint8_t s);
@@ -122,13 +129,13 @@ private:
 	static void socketDisconnect(uint8_t s);
 	// Establish TCP connection (Passive connection)
 	static uint8_t socketListen(uint8_t s);
-	// Send data (TCP or RAW)
+	// Send data (TCP)
 	static uint16_t socketSend(uint8_t s, const uint8_t * buf, uint16_t len);
 	static uint16_t socketSendAvailable(uint8_t s);
-	
 	// Receive data (TCP)
 	static int socketRecv(uint8_t s, uint8_t * buf, int16_t len);
 	static uint16_t socketRecvAvailable(uint8_t s);
+
 	static uint8_t socketPeek(uint8_t s);
 	// sets up a UDP datagram, the data for which will be provided by one
 	// or more calls to bufferData and then finally sent with sendUDP.
@@ -147,6 +154,27 @@ private:
 };
 
 extern EthernetClass Ethernet;
+
+
+
+class EthernetRAW : public RAW {
+private:
+	uint16_t _port;
+public:
+	EthernetRAW(uint16_t port) : _port(port) { }
+	EthernetClient available();
+	EthernetClient accept();
+	virtual void begin();
+	virtual size_t write(uint8_t);
+	virtual size_t write(const uint8_t *buf, size_t size);
+	virtual operator bool();
+	using Print::write;
+	//void statusreport();
+
+	// TODO: make private when socket allocation moves to EthernetClass
+	static uint16_t server_port[MAX_SOCK_NUM];
+};
+
 
 
 #define UDP_TX_PACKET_MAX_SIZE 24
@@ -316,9 +344,6 @@ public:
 	int beginWithDHCP(uint8_t *, unsigned long timeout = 60000, unsigned long responseTimeout = 4000);
 	int checkLease();
 };
-
-
-
 
 
 #endif

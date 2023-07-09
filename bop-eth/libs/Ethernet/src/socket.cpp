@@ -58,10 +58,11 @@ static void read_data(uint8_t s, uint16_t src, uint8_t *dst, uint16_t len);
 /**
  * @brief	This function used to create in RAW mode
  */
-void EthernetClass::socketRawBegin(uint8_t s, const uint8_t *data, uint16_t len)
+void EthernetClass::socketBeginRaw((uint8_t protocol)
 {
-	uint8_t protocol = SnSR::IPRAW // __SOCKET_REGISTER8(SnPROTO, 0x0014) IP RAW Mode
+	// uint8_t protocol = SnSR::IPRAW // __SOCKET_REGISTER8(SnPROTO, 0x0014) IP RAW Mode
 	uint8_t s, status[MAX_SOCK_NUM], chip, maxindex = MAX_SOCK_NUM chip = W5100.getChip();
+	// uint16_t port = 0 											// if needed, otherwise do not use port
 	// uint16_t port = 7 											// if needed, otherwise do not use port
 
 	// first check hardware compatibility
