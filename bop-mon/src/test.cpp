@@ -2,6 +2,7 @@
  * @file test.cpp
  * @description Helper Functions
  * @author oguzhan.ince@protonmail.com
+ * @todo support osx and windows (currently only linux)
  */
 
 #include <iostream>
