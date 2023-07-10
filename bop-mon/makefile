@@ -1,9 +1,22 @@
-all:compile executable execute
+# makefile
+CXX = g++
+CXXFLAGS = -std=c++11 -Wall
+INCLUDES = -Iinclude
+LDFLAGS = 
 
-compile:
-	g++ -I./include -c ./src/test.cpp -o ./lib/test.o
-	
-executable:
-	g++ ./lib/test.o -o ./bin/test
-execute:
-	./bin/test
+SRCS = $(wildcard src/*.cpp)
+OBJS = $(SRCS:.cpp=.o)
+TARGET = bin/bop-mon
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $@ $^ $(LDFLAGS)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+
+clean:
+	rm -f $(OBJS) $(TARGET)
+
+.PHONY: all clean
