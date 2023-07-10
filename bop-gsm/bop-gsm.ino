@@ -64,7 +64,7 @@ void setup() {
   delay(1000);
 
 
-  tracker.sendSMS("+905304543426", "BOP2!");
+  tracker.sendSMS("+XXXXXXXXXXXX", "BOP-GSM is online");
   DEBUG.println("SMS sent!");
 
   // AT command to configure GSM module for text mode SMS
