@@ -1,7 +1,7 @@
 /**
  * @file main.cpp
- * @description Main Function
- * @author oguzhan.ince@protonmail.com
+ * @details main function
+ * @copyright oguzhan.ince@protonmail.com
  */
 
 #include "test.hpp"

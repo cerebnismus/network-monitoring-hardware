@@ -1,6 +1,6 @@
 /**
  * @file test.hpp
- * @description Helper Functions
+ * @details Helper Functions
  * @author oguzhan.ince@protonmail.com
  */
 

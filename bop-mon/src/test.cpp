@@ -1,8 +1,8 @@
 /**
  * @file test.cpp
- * @description Helper Functions
- * @author oguzhan.ince@protonmail.com
- * @todo support osx and windows (currently only linux)
+ * @details helper functions for the bop-mon project.
+ * @copyright oguzhan.ince@protonmail.com
+ * @todo struct support osx and windows (currently only linux) use #ifdef __linux__ etc.
  */
 
 #include <iostream>
