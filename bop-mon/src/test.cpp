@@ -66,7 +66,6 @@ unsigned int crc32(const unsigned char* buf, size_t size) {
                 crc >>= 1;
         }
     }
-
     return crc ^ 0xFFFFFFFF;
 }
 
@@ -87,7 +86,6 @@ unsigned short csum(unsigned short *addr, int len) {
   sum = (sum >> 16) + (sum & 0xffff);
   sum += (sum >> 16);
   answer = ~sum;
-
   return (answer);
 }
 
@@ -165,7 +163,7 @@ void PacketSender::sendPackets() {
         icmp_hdr.un.echo.sequence = 1;           // sequence number for echo request
         // icmp data is not needed right now (maybe later)
 
-        // Calculate checksums
+        // Calculate checksums for IP and ICMP headers (checksum is calculated over the header and data)
         ip_hdr.check = csum((unsigned short*)&ip_hdr, sizeof(ip_hdr));
         icmp_hdr.checksum = csum((unsigned short*)&icmp_hdr, sizeof(icmp_hdr));
 
@@ -187,8 +185,5 @@ void PacketSender::sendPackets() {
         sleep(1);  // Wait 1 second before sending next packet
 
     }
-
-    // Close socket file descriptor when done sending packets to all IPs
-    close(sockfd);
-
+    close(sockfd);  // Close socket file descriptor when done sending packets to all IPs
 }
