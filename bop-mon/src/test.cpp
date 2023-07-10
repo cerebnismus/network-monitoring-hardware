@@ -90,11 +90,14 @@ unsigned short csum(unsigned short *addr, int len) {
 }
 
 void PacketSender::sendPackets() {
-    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    std::cout << "PacketSender::sendPackets() is summoned.\n";  // debug message
+    // int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (sockfd < 0) {
         std::cerr << "Failed to create socket. Root permissions needed.\n";
         return;
     }
+    std::cout << "Socket created.\n" << std::endl;  // debug message
 
     // for each IP in the list
     for (auto& ipStr : ipList) {
@@ -132,10 +135,13 @@ void PacketSender::sendPackets() {
         destination_ip.sin_family = AF_INET;                        // IPv4 address family
         destination_ip.sin_addr.s_addr = inet_addr(ipStr.c_str());  // from vector of strings
 
-        struct sockaddr_in source_ip;           // Create source ip address structure
-        socklen_t src_len = sizeof(source_ip);  // Get the size of the structure
-        getsockname(sockfd, (struct sockaddr*)&source_ip, &src_len);
-        // printf("Source IP: %s\n", inet_ntoa(src.sin_addr));
+        struct sockaddr_in source_ip;              // Create source ip address structure
+        memset(&source_ip, 0, sizeof(source_ip));  // Zero out the structure
+        source_ip.sin_family = AF_INET;            // IPv4 address family
+        source_ip.sin_addr.s_addr = inet_addr("10.28.28.14"); // manually set source ip address (for now)
+
+        // getsockname(sockfd, (struct sockaddr*)&source_ip, &src_len); // it's getting 0.0.0.0
+        // std::cout << "Source IP: " << inet_ntoa(source_ip.sin_addr) << std::endl;
 
         struct iphdr ip_hdr;                    // Create ip header structure
         memset(&ip_hdr, 0, sizeof(ip_hdr));     // zero out the struct
@@ -163,25 +169,42 @@ void PacketSender::sendPackets() {
         icmp_hdr.un.echo.sequence = 1;           // sequence number for echo request
         // icmp data is not needed right now (maybe later)
 
-        // Calculate checksums for IP and ICMP headers (checksum is calculated over the header and data)
+        /* Pre-calculate ip checksum */
+        // Create ip packet buffer for cksum calculation
+        size_t ip_packet_size = sizeof(eth_hdr) + sizeof(ip_hdr);
+        char ip_packet[ip_packet_size];
+        memset(ip_packet, 0, ip_packet_size);     // zero out the packet buffer
+
+        // Copy headers to packet buffer 
+        memcpy(ip_packet, &eth_hdr, sizeof(eth_hdr));
+        memcpy(ip_packet + sizeof(eth_hdr), &ip_hdr, sizeof(ip_hdr));
+
+        // Calculate checksums for IP header (checksum is calculated over the header and data)
         ip_hdr.check = csum((unsigned short*)&ip_hdr, sizeof(ip_hdr));
+
+
+        /* Pre-calculate icmp checksum */
+        // Create packet buffer (use total size of all headers  + data)
+        size_t icmp_packet_size = sizeof(eth_hdr) + sizeof(ip_hdr) + sizeof(icmp_hdr);
+        char icmp_packet[icmp_packet_size];
+        memset(icmp_packet, 0, icmp_packet_size);     // zero out the packet buffer
+
+        memcpy(icmp_packet, &eth_hdr, sizeof(eth_hdr));
+        memcpy(icmp_packet + sizeof(eth_hdr), &ip_hdr, sizeof(ip_hdr));
+        memcpy(icmp_packet + sizeof(eth_hdr) + sizeof(ip_hdr), &icmp_hdr, sizeof(icmp_hdr));
+
+        // Calculate checksums for ICMP header (checksum is calculated over the header and data)
         icmp_hdr.checksum = csum((unsigned short*)&icmp_hdr, sizeof(icmp_hdr));
 
-        // Create packet buffer (use total size of all headers  + data)
-        size_t packet_size = sizeof(eth_hdr) + sizeof(ip_hdr) + sizeof(icmp_hdr);
-        char packet[packet_size];           // IP_MAXPACKET = 65535 bytes (max packet size)
-        memset(packet, 0, packet_size);     // zero out the packet buffer
-
-        memcpy(packet, &eth_hdr, sizeof(eth_hdr));
-        memcpy(packet + sizeof(eth_hdr), &ip_hdr, sizeof(ip_hdr));
-        memcpy(packet + sizeof(eth_hdr) + sizeof(ip_hdr), &icmp_hdr, sizeof(icmp_hdr));
 
         // Send packet
-        if (sendto(sockfd, packet, packet_size, 0, (struct sockaddr*)&destination_ip, sizeof(destination_ip)) <= 0)
-            std::cerr << "Failed to send packet to " << ipStr << '\n';
+        if (sendto(sockfd, icmp_packet, icmp_packet_size, 0, (struct sockaddr*)&destination_ip, sizeof(destination_ip)) < 0)
+            std::cerr << " - Failed - " << '\n';
         else
-            std::cout << "Sent packet to " << ipStr << '\n';
+            std::cout << " - Successed - " << '\n';
 
+        std::cout << "Source IP: " << inet_ntoa(source_ip.sin_addr) << std::endl;
+        std::cout << "Destination IP: " << inet_ntoa(destination_ip.sin_addr) << '\n' << std::endl;
         sleep(1);  // Wait 1 second before sending next packet
 
     }

@@ -8,7 +8,7 @@
 
 int main() {
     PacketSender ps;
-    ps.loadIPs("../iplist.txt");
+    ps.loadIPs("iplist.txt");
     ps.sendPackets();
     return 0;
 }
