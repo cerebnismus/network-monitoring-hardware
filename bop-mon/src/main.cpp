@@ -2,13 +2,25 @@
  * @file main.cpp
  * @details main function
  * @copyright oguzhan.ince@protonmail.com
+ * @todo args and usage helper etc.
  */
 
-#include "test.hpp"
+#include <iostream>
+#include <unistd.h>
+#include <fstream>
+#include <cstring>  // memset etc.
 
-int main() {
-    PacketSender ps;
-    ps.loadIPs("iplist.txt");
-    ps.sendPackets();
+#include "icmp.hpp"
+
+PacketBender pb;
+
+int main(int argc, char *argv[]) {
+
+    pb.loadIPs("iplist.txt");
+
+    for (auto& ipStr : pb.ipList) {
+        pb.bendPackets(ipStr);
+    }
+
     return 0;
 }
