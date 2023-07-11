@@ -12,9 +12,9 @@ The Bowl of Petunias project aims to create a comprehensive network monitoring s
 - **Real-Time Galactic Insights**: Process network data in real-time, providing you with up-to-the-minute insights and the ability to act swiftly in this ever-expanding universe of interconnected devices.
 
 ## Getting Started
-Follow these steps to embark on your journey with the Bowl of Petunias:
-1. Clone this repository to your local machine using the command
-`git clone https://github.com/cerebnismus/bowl-of-petunias.git`.
+Follow these steps to embark on your journey with the Bowl of Petunias
+1. Clone this repository to your local machine using the command:
+```git clone https://github.com/cerebnismus/bowl-of-petunias.git```
 3. Explore the source code and unleash your inner intergalactic network explorer.
 4. Customize and enhance the project to suit your cosmic monitoring needs.
 
