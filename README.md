@@ -13,8 +13,8 @@ The Bowl of Petunias project aims to create a comprehensive network monitoring s
 
 ## Getting Started
 Follow these steps to embark on your journey with the Bowl of Petunias
-```git clone https://github.com/cerebnismus/bowl-of-petunias.git```
 1. Clone this repository to your local machine.
+- ```git clone https://github.com/cerebnismus/bowl-of-petunias.git```
 3. Explore the source code and unleash your inner intergalactic network explorer.
 4. Customize and enhance the project to suit your cosmic monitoring needs.
 
