@@ -52,7 +52,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "test.hpp"
+#include "icmp.hpp"
 
 
 #define PACKET_SIZE     4096
