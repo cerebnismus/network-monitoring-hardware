@@ -19,100 +19,13 @@ Follow these steps to embark on your journey with the Bowl of Petunias
 3. Explore the source code and unleash your inner intergalactic network explorer.
 4. Customize and enhance the project to suit your cosmic monitoring needs.
 
-## Modules and Libraries
+## Modules
+The Bowl of Petunias is comprised of several modules, each with its own unique purpose and functionality. Explore the modules below to learn more about each one.
 
-### [bop-eth](bop-eth/)
-Allows you to send ICMP requests to remote network nodes. It's built using the **customized Arduino Ethernet library** and the **W5100 library**, based on mbed that implements the EthernetInterface for the Wiznet W5100 based Ethernet shield.
+- [bop-eth](bop-eth/)
+- [bop-gsm](bop-gsm/)
+- [bop-icmp](bop-icmp/)
 
-You need to have the Arduino CLI installed on your system to use this project.
-
-This project requires the following Arduino libraries:
-```
-Ethernet@2.0.0
-SoftwareSerial@1.0.0
-```
-
-To install the **required** library:
-```
-arduino-cli lib install "SoftwareSerial@1.0.0"
-```
-
-After installing the required libraries, compile the project using the Arduino CLI.
-
-For Linux (Raspberry Pi):
-```
-arduino-cli compile  \
-  --fqbn arduino:avr:uno  \
-  --port /dev/ttyUSB1  \
-  --libraries /home/pi/bowl-of-petunias/bop-eth/libs/  \
-  --build-cache-path /home/pi/bowl-of-petunias/bop-eth/build-cache/  \
-  --export-binaries --warnings all  \
-  --output-dir /home/pi/bowl-of-petunias/bop-eth/bin/  \
-  --upload  \
-  --verify  \
-  --verbose  \
-  --clean \
-  /home/pi/bowl-of-petunias/bop-eth/bop-eth.ino
-```
-
-For macOS:
-```
-arduino-cli compile  \
-  --fqbn arduino:avr:uno  \
-  --port /dev/cu.usbserial-14120  \
-  --libraries /Users/macbook/Documents/bowl-of-petunias/bop-eth/libs/  \
-  --build-cache-path /Users/macbook/Documents/bowl-of-petunias/bop-eth/build-cache/  \
-  --export-binaries --warnings all  \
-  --output-dir /Users/macbook/Documents/bowl-of-petunias/bop-eth/bin/  \
-  --upload  \
-  --verify  \
-  --verbose  \
-  --clean \
-  /Users/macbook/Documents/bowl-of-petunias/bop-eth/bop-eth.ino
-```
-
-The software will send ICMP requests to the IP address specified in the destinationIP variable in the code. You should replace the IP address with the one for your target network node.
-
-MAC addresses must also be set. Replace destinationMAC with your Router's MAC address and sourceMAC with your Arduino's MAC address.
-
-This project is powered by Arduino Ethernet library and W5100Interface which implements the EthernetInterface for the Wiznet W5100 based Ethernet shield.
-
-### [bop-gsm](bop-gsm/)
-This project enables you to send ICMP requests to remote network nodes using Arduino SoftwareSerial library and the Sixfab Tracker library.
-
-**The code includes:**
-- Initialization of Sixfab Tracker
-- Indicating the readiness of the system with the onboard User LED
-- Sending an SMS message for notification
-- Configuring the GSM module for text mode SMS
-- Receiving and processing user input from the serial monitor
-- Sending an ICMP Echo Request to a predefined IP address when 'p' is received from the serial monitor.
-
-The program depends on two libraries: SoftwareSerial and Sixfab Tracker. The former allows for serial communication on other digital pins of the Arduino, while the latter is a specialized library for the Sixfab Tracker.
-
-Follow these steps to install the libraries:
-
-Open your terminal and run ```arduino-cli board list``` to make sure your Arduino board is recognized.
-Run ```arduino-cli lib install "Sixfab_Tracker"``` to install the Sixfab Tracker library.
-Run ```arduino-cli lib install "SoftwareSerial@1.0.0"``` to install the SoftwareSerial library.
-
-Use the following command to compile the project on pi:
-```
-arduino-cli compile  \
-  --fqbn arduino:avr:uno  \
-  --port /dev/ttyUSB0  \
-  --libraries /home/pi/bowl-of-petunias/bop-gsm/libs/  \
-  --build-cache-path /home/pi/bowl-of-petunias/bop-gsm/build-cache/  \
-  --export-binaries --warnings all  \
-  --output-dir /home/pi/bowl-of-petunias/bop-gsm/bin/  \
-  --upload  \
-  --verify  \
-  --verbose  \
-  --clean \
-  /home/pi/bowl-of-petunias/bop-gsm/bop-gsm.ino
-```
-
-This project is based on the Sixfab Arduino Tracker Shield library originally created by Yasin Kaya (selengalp), and later updated by Oguzhan Ince (cerebnismus). The original library can be found [here](https://github.com/sixfab/Sixfab_Arduino_Tracker_Shield/).
 
 ## Contributing
 Contributions from fellow cosmic explorers are most welcome! If you have ideas, improvements, or bug fixes, feel free to submit a pull request. Together, we can push the boundaries of network monitoring and bring forth new discoveries.
