@@ -13,18 +13,18 @@ The Bowl of Petunias project aims to create a comprehensive network monitoring s
 
 
 ## Getting Started
-Follow these steps to embark on your journey with the Bowl of Petunias
-1. Clone this repository to your local machine.
-- ```git clone https://github.com/cerebnismus/bowl-of-petunias.git```
-3. Explore the source code and unleash your inner intergalactic network explorer.
-4. Customize and enhance the project to suit your cosmic monitoring needs.
-
-## Modules
 The Bowl of Petunias is comprised of several modules, each with its own unique purpose and functionality. Explore the modules below to learn more about each one.
 
 - [bop-eth](bop-eth/)
 - [bop-gsm](bop-gsm/)
 - [bop-icmp](bop-icmp/)
+
+Follow these steps to embark on your journey to the network universe:
+1. Clone this repository to your local machine.
+- ```git clone https://github.com/cerebnismus/bowl-of-petunias.git```
+2. Explore the source code and unleash your inner intergalactic network explorer.
+3. Customize and enhance the project to suit your cosmic monitoring needs.
+
 
 
 ## Contributing
