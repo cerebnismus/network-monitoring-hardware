@@ -6,7 +6,7 @@ LDFLAGS =
 
 SRCS = $(wildcard src/*.cpp)
 OBJS = $(SRCS:.cpp=.o)
-TARGET = bin/bop-mon
+TARGET = bin/bop-icmp
 
 all: $(TARGET)
 
