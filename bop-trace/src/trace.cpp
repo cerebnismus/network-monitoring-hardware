@@ -124,7 +124,7 @@ unsigned short PacketBender::icmp_checksum(unsigned short *addr, int len)
 }
 
 
-int PacketBender::icmp_echo_header(int pack_no)
+int PacketBender::icmp_echo_header(int pack_no, int ttl)
 {
     int packsize;
     struct icmp *icmp;
@@ -150,10 +150,10 @@ int PacketBender::icmp_echo_header(int pack_no)
     ip->ip_len = sizeof(struct ip) + sizeof(struct icmp) + ICMP_DATA_LEN;
     ip->ip_id = pid;
     ip->ip_off = 0x0;        // fragment offset
-    ip->ip_ttl = IPDEFTTL;   // time to live (default 64)  - IPTTLDEC
+    ip->ip_ttl = ttl;   // set TTL to input value
     ip->ip_p = IPPROTO_ICMP; // ICMP protocol number (1)
     ip->ip_sum = 0;
-    ip->ip_src.s_addr = inet_addr("10.28.28.14");
+    ip->ip_src.s_addr = inet_addr("1.1.1.1");
     ip->ip_dst.s_addr = dest_addr.sin_addr.s_addr;
     // ip options are not needed right now (maybe later)
     packsize += sizeof(struct ip);
@@ -169,64 +169,71 @@ int PacketBender::icmp_echo_header(int pack_no)
 void PacketBender::send_icmp_echo_packet()
 {
     int packetsize;
-    nsend++;
-    packetsize = icmp_echo_header(nsend);
 
-    /* Send the ICMP packet to the destination Address */
-    if (sendto(sockfd, sendpacket, packetsize, 0,
-               (struct sockaddr *)&dest_addr, sizeof(dest_addr)) < 0)
+    // Open a socket to send and receive ICMP messages
+    int s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (s < 0)
     {
-        perror("sendto error");
-        nsend--;
-    }
-    else
-    {
-        printf("Send ICMP echo packet to %s\n", inet_ntoa(dest_addr.sin_addr));
-    }
-    close(sockfd);
-}
-
-void PacketBender::recv_icmp_reply_packet()
-{
-    struct sockaddr_ll saddrll;
-    socklen_t recvsocklen = sizeof(saddrll);
-    char recvpacket[4096];
-    int rc;
-
-    int receive_s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    if (receive_s < 0)
-    {
-        std::cout << "receive_s error!" << std::endl
-                  << std::flush;
+        perror("socket error");
         exit(-1);
     }
 
     struct timeval tv;
-    tv.tv_sec = 1;
+    tv.tv_sec = 2;
     tv.tv_usec = 0;
-    if (setsockopt(receive_s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)) < 0)
+    if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)) < 0)
     {
-        std::cout << "setsockopt RCVTIMEO error!" << std::endl
-                  << std::flush;
-        close(receive_s);
+        perror("setsockopt RCVTIMEO error");
+        close(s);
         exit(-1);
     }
 
-    rc = recvfrom(receive_s, recvpacket, sizeof(recvpacket), 0, (struct sockaddr *)&saddrll, &recvsocklen);
-    if (rc == -1)
-    {
-        std::cout << "recvfrom error!" << std::endl
-                  << std::flush;
-        close(receive_s);
-        exit(-1);
-    }
-    close(receive_s);
-    recvpacket[rc] = 0;
+    for(int ttl = 1; ttl <= MAXTTL; ttl++) {
+        nsend++;
+        packetsize = icmp_echo_header(nsend, ttl);
 
-    std::cout << "receivedbytes= " << rc << std::flush;
-    std::cout << saddrll.sll_addr << std::flush;
-    std::cout << saddrll.sll_protocol << std::flush;
+        /* Send the ICMP packet to the destination Address */
+        if (sendto(s, sendpacket, packetsize, 0,
+                   (struct sockaddr *)&dest_addr, sizeof(dest_addr)) < 0)
+        {
+            perror("sendto error");
+            nsend--;
+        }
+        else
+        {
+            printf("Send ICMP echo packet to %s with TTL %d\n", 
+                inet_ntoa(dest_addr.sin_addr), ttl);
+        }
+
+        struct sockaddr_in from;
+        socklen_t recvsocklen = sizeof(from);
+        char recvpacket[4096];
+        int rc = recvfrom(s, recvpacket, sizeof(recvpacket), 0, (struct sockaddr *)&from, &recvsocklen);
+
+        if (rc == -1)
+        {
+            perror("recvfrom error");
+            continue; // In case of timeout or error, continue with the next ttl
+        }
+
+        struct ip* ip = (struct ip*) recvpacket;
+        struct icmp* icmp = (struct icmp*) (recvpacket + (ip->ip_hl << 2)); // Shift left by 2 (same as multiply by 4) to convert header length unit from words to bytes
+
+        if(icmp->icmp_type == ICMP_TIMXCEED && icmp->icmp_code == ICMP_TIMXCEED_INTRANS) {
+            printf("TTL=%d: Received ICMP Time Exceeded from %s\n", ttl, inet_ntoa(from.sin_addr));
+        }
+        else if(icmp->icmp_type == ICMP_ECHOREPLY) {
+            printf("TTL=%d: Received ICMP Echo Reply from %s\n", ttl, inet_ntoa(from.sin_addr));
+            close(s); // Close the socket and break the loop when Echo Reply is received
+            return;
+        }
+    }
+
+    close(s);
 }
+
+
+
 
 void PacketBender::bendPackets(const std::string &ipStr)
 {
@@ -267,5 +274,4 @@ void PacketBender::bendPackets(const std::string &ipStr)
            inet_ntoa(dest_addr.sin_addr), ICMP_DATA_LEN);
 
     send_icmp_echo_packet();
-    recv_icmp_reply_packet();
 }

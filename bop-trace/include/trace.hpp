@@ -30,7 +30,7 @@ public:
     unsigned short icmp_checksum(unsigned short *addr, int len);
 
     // Calculates the CRC32 checksum
-    int icmp_echo_header(int pack_no);
+    int icmp_echo_header(int pack_no, int ttl);
 
     // Sends ICMP echo requests to all loaded IPs
     void send_icmp_echo_packet(void);
