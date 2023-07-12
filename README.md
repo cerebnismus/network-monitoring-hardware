@@ -20,8 +20,7 @@ Follow these steps to embark on your journey with the Bowl of Petunias
 4. Customize and enhance the project to suit your cosmic monitoring needs.
 
 
-### Description
-- [bop-eth](bop-eth/)
+### [bop-eth](bop-eth/)
 Allows you to send ICMP requests to remote network nodes. It's built using the **customized Arduino Ethernet library** and the **W5100 library**, based on mbed that implements the EthernetInterface for the Wiznet W5100 based Ethernet shield.
 
 You need to have the Arduino CLI installed on your system to use this project.
