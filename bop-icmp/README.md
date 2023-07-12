@@ -1,4 +1,4 @@
-### Universal Network Monitoring Implementation in C/C++
+### Universal Network Monitoring with ICMP Implementation in C/C++
 Crafting raw icmp packets for network cosmos.
 
 ### Installation
