@@ -81,7 +81,7 @@ struct
 void usage()
 {
     int i; // fprintf(stderr, "
-    fprintf(stdout, "\nraw_snmp [options] <host> <community>\n\n");
+    fprintf(stdout, "\nsnmp [options] <host> <community>\n\n");
     fprintf(stdout, "  -c <communityfile> file with community names to try\n");
     fprintf(stdout, "  -i <inputfile>     file with target hosts\n");
     fprintf(stdout, "  -o <outputfile>    output log\n");
@@ -98,8 +98,8 @@ void usage()
     fprintf(stdout, "Max number of hosts : \t\t%d\n", MAX_HOSTS);
     fprintf(stdout, "Max community length: \t\t%d\n", MAX_COMMUNITY_SIZE);
     fprintf(stdout, "Max number of communities: \t%d\n", MAX_COMMUNITIES);
-    fprintf(stdout, "\nExamples: raw_snmp 192.168.4.0/24 public\n");
-    fprintf(stdout, "          raw_snmp -c dict.txt -i hosts -o my.log -w 100\n\n");
+    fprintf(stdout, "\nExamples: snmp 192.168.4.0/24 public\n");
+    fprintf(stdout, "          snmp -c dict.txt -i hosts -o my.log -w 100\n\n");
 }
 
 void read_communities(char *filename)
