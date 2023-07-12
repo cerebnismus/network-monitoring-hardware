@@ -54,12 +54,15 @@
 
 #include "icmp.hpp"
 
-
-#define PACKET_SIZE     4096
+#define ICMP_PACKET     4096
 #define ICMP_DATA_LEN   56
+#define PACKET_SIZE     ICMP_PACKET + IP_MAXPACKET
 
 PacketBender::PacketBender() {}
 PacketBender::~PacketBender() {}
+
+char icmppacket[ICMP_PACKET];           // store the icmp package
+char ippacket[IP_MAXPACKET];            // store the ip package
 
 char sendpacket[PACKET_SIZE];           // store the send package
 char recvpacket[PACKET_SIZE];           // store the recevice package
@@ -167,7 +170,8 @@ int PacketBender::icmp_echo_header(int pack_no)
     struct timeval *tval;
 
     /* ICMP Header structure */
-    icmp = (struct icmp*)sendpacket;
+    // icmp = (struct icmp*)sendpacket;
+    icmp = (struct icmp*)icmppacket;
     icmp->icmp_type = ICMP_ECHO;
     icmp->icmp_code = 0;
     icmp->icmp_cksum = 0;
@@ -176,34 +180,51 @@ int PacketBender::icmp_echo_header(int pack_no)
     packsize = 8 + ICMP_DATA_LEN;  // 8 + 56 (data) = 64 Bytes ICMP header
     tval = (struct timeval *)icmp -> icmp_data;
     gettimeofday(tval, NULL);
-    icmp->icmp_cksum = icmp_checksum( (unsigned short *)icmp, packsize);
-
- /**********************************************************************
- * Format: ip_header                                                   *
- *                                                                     *
- *   0                   1                   2                   3     *
- *   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1   *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |Version|  IHL  |Type of Service|          Total Length         |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |         Identification        |Flags|      Fragment Offset    |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |  Time to Live |    Protocol   |         Header Checksum       |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |                       Source Address                          |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |                    Destination Address                        |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |                    Options                    |    Padding    |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *                                                                     *
- * *********************************************************************/
-
-    /* IP Header structure */
-    ip = (struct ip*)sendpacket;
-    ip->ip_v = IPVERSION;  // 4 bits
+    icmp->icmp_cksum = icmp_checksum((unsigned short *)icmp, packsize);
 
 
+    /**********************************************************************
+    * Format: ip_header                                                   *
+    *                                                                     *
+    *   0                   1                   2                   3     *
+    *   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1   *
+    *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+    *  |Version|  IHL  |Type of Service|          Total Length         |  *
+    *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+    *  |         Identification        |Flags|      Fragment Offset    |  *
+    *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+    *  |  Time to Live |    Protocol   |         Header Checksum       |  *
+    *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+    *  |                       Source Address                          |  *
+    *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+    *  |                    Destination Address                        |  *
+    *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+    *  |                    Options                    |    Padding    |  *
+    *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+    *                                                                     *
+    **********************************************************************/
+
+    /* IP Header structure */ 
+    struct ip *ip;
+    ip = (struct ip*)ippacket;
+    ip->ip_v = IPVERSION;     // low nibble
+    ip->ip_hl = 5;            // high nibble (5 x 4 = 20 Bytes header length)
+    ip->ip_tos = 0;           // type of service (0 = default) low delay
+    ip->ip_len = sizeof(struct ip) + sizeof(struct icmp) + ICMP_DATA_LEN;
+    ip->ip_id = pid;          // process id
+    ip->ip_off = 0;           // fragment offset
+    ip->ip_ttl = IPDEFTTL;    // time to live (default 64)
+    ip->ip_p = IPPROTO_ICMP;  // ICMP protocol number (1)
+    ip->ip_sum = 0;           // calculate later !!
+    ip->ip_src.s_addr = inet_addr("10.28.28.14");
+    ip->ip_dst.s_addr = dest_addr.sin_addr.s_addr;
+    // ip options are not needed right now (maybe later)
+    packsize += sizeof(struct ip);
+    ip->ip_sum = icmp_checksum((unsigned short *)ip, sizeof(struct ip));
+
+    /* Copy ICMP header and data and IP header to sendpacket buffer */
+    memcpy(sendpacket, ip, sizeof(struct ip));
+    memcpy(sendpacket + sizeof(struct ip), icmp, sizeof(struct icmp));
     return packsize;
 }
 
@@ -288,24 +309,20 @@ void PacketBender::bendPackets(const std::string& ipStr) {
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_addr.s_addr = inet_addr(ipStr.c_str());
 
-    
+    // inform the kernel do not fill up the packet structure, we will build our own
+    if(setsockopt(sockfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0) {
+      perror("setsockopt() error");
+      exit(2);
+    }
+    printf("OK: socket option IP_HDRINCL is set.\n");
+
+
     printf("PING %s(%s): %d bytes data in ICMP packets.\n" , ipStr.c_str(),
             inet_ntoa(dest_addr.sin_addr), ICMP_DATA_LEN);
-    
+
     while (1) {
         send_icmp_echo_packet();
         recv_icmp_reply_packet();
     }
+
 }
-
-
-/*
-
-  // inform the kernel do not fill up the packet structure, we will build our own
-  if(setsockopt(sd, IPPROTO_IP, IP_HDRINCL, val, sizeof(one)) < 0) {
-    perror("setsockopt() error");
-    exit(2);
-  }
-  printf("OK: socket option IP_HDRINCL is set.\n");
-
-*/
