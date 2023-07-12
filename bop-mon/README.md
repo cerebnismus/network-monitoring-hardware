@@ -11,5 +11,5 @@ $ make
 
 sudo is required to access the raw socket. The program will not run without it.
 ```
-$ sudo ./bin/bop-mon
+$ sudo ./bin/bop-icmp
 ```
