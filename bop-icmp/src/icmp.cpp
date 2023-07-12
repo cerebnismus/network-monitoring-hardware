@@ -115,7 +115,7 @@ void PacketBender::dump(const unsigned char *data_buffer, const unsigned int len
 
 
  /**********************************************************************
- * Function: cal_chksum                                                *
+ * Function: icmp_checksum                                             *
  * Description: calculate checksum                                     *
  * Arguments: 1st argument: pointer to beginning of the ICMP HEADER    *
  *            2nd argument: Length of ICMP packet header (64 bytes)    *
@@ -145,32 +145,9 @@ unsigned short PacketBender::icmp_checksum(unsigned short *addr, int len)
     return answer;
 }
 
- /**********************************************************************
- * Function: ip_header                                                 *
- * Description: Craft IP header                                        *
- *                                                                     *
- *   0                   1                   2                   3     *
- *   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1   *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |Version|  IHL  |Type of Service|          Total Length         |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |         Identification        |Flags|      Fragment Offset    |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |  Time to Live |    Protocol   |         Header Checksum       |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |                       Source Address                          |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |                    Destination Address                        |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *  |                    Options                    |    Padding    |  *
- *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
- *                                                                     *
- * *********************************************************************/
-
 
  /**********************************************************************
- * Function: icmp_echo_header                                          *
- * Description: Send "ICMP echo" packet to Destination Host            *
+ * Format: icmp_echo_header                                            *
  *                                                                     *
  *   0                   1                   2                   3     *
  *   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1   *
@@ -200,6 +177,33 @@ int PacketBender::icmp_echo_header(int pack_no)
     tval = (struct timeval *)icmp -> icmp_data;
     gettimeofday(tval, NULL);
     icmp->icmp_cksum = icmp_checksum( (unsigned short *)icmp, packsize);
+
+ /**********************************************************************
+ * Format: ip_header                                                   *
+ *                                                                     *
+ *   0                   1                   2                   3     *
+ *   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1   *
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+ *  |Version|  IHL  |Type of Service|          Total Length         |  *
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+ *  |         Identification        |Flags|      Fragment Offset    |  *
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+ *  |  Time to Live |    Protocol   |         Header Checksum       |  *
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+ *  |                       Source Address                          |  *
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+ *  |                    Destination Address                        |  *
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+ *  |                    Options                    |    Padding    |  *
+ *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+  *
+ *                                                                     *
+ * *********************************************************************/
+
+    /* IP Header structure */
+    ip = (struct ip*)sendpacket;
+    ip->ip_v = IPVERSION;  // 4 bits
+
+
     return packsize;
 }
 

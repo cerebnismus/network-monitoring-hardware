@@ -11,7 +11,6 @@ The Bowl of Petunias project aims to create a comprehensive network monitoring s
 - **Cosmic Packet Analysis**: Analyze ICMP and SNMP packets with precision, extracting valuable information and unraveling the mysteries of network behavior.
 - **Real-Time Galactic Insights**: Process network data in real-time, providing you with up-to-the-minute insights and the ability to act swiftly in this ever-expanding universe of interconnected devices.
 
-
 ## Getting Started
 The Bowl of Petunias is comprised of several modules, each with its own unique purpose and functionality. Explore the modules below to learn more about each one.
 
@@ -24,7 +23,6 @@ Follow these steps to embark on your journey to the network universe:
 - ```git clone https://github.com/cerebnismus/bowl-of-petunias.git```
 2. Explore the source code and unleash your inner intergalactic network explorer.
 3. Customize and enhance the project to suit your cosmic monitoring needs.
-
 
 
 ## Contributing
