@@ -3,7 +3,7 @@
   AUTH: Oguzhan Ince (cerebnismus) 
   MAIL: <oguzhan.ince@protonmail.com>
   DATE: July 07, 2023.
-  DESC: Send a icmp and snmp requests to a remote network nodes. 
+  DESC: Send a icmp requests to a remote network nodes. 
   
   The project is based on the Arduino Ethernet library and the W5100Interface. 
   Library is a mbed library that implements the EthernetInterface for the

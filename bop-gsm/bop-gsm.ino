@@ -3,7 +3,7 @@
   AUTH: Oguzhan Ince (cerebnismus)
   MAIL: <oguzhan.ince@protonmail.com>
   DATE: July 07, 2023.
-  DESC: Send a icmp and snmp requests to a remote network nodes.
+  DESC: Send a icmp requests to a remote network nodes.
   
   The project is based on the Arduino SoftwareSerial library and the Sixfab_Tracker.
   Library is a mbed library that implements the SoftwareSerial for the Arduino.
