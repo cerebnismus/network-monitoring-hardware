@@ -361,6 +361,7 @@ void PacketBender::recv_icmp_reply_packet()
 		std::cout << saddrll.sll_protocol << std::flush;
 }
 
+
 void PacketBender::bendPackets(const std::string& ipStr) {
     struct protoent *protocol;
     int size = 50 * 1024;
