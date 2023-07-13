@@ -66,6 +66,7 @@ char recvpacket[PACKET_SIZE]; // store the recevice package
 
 int sockfd;                   // store the socket file descriptor
 int nsend = 0, nreceived = 0; // store the number of send and receive packages
+int timetolive;               // store the ttl value
 
 struct sockaddr_in dest_addr; // store the destination address info
 struct sockaddr_in from_addr; // store the localhost address info
@@ -90,7 +91,7 @@ void PacketBender::dump(const unsigned char *data_buffer, const unsigned int len
     unsigned char byte;
     unsigned int i, j;
 
-    for (i = 0; i < length; i++)
+    for (i = 1; i < length; i++)
     {
 
         byte = data_buffer[i];
@@ -218,7 +219,7 @@ int PacketBender::icmp_echo_header(int pack_no)
     ip->ip_len = sizeof(struct ip) + sizeof(struct icmp) + ICMP_DATA_LEN;
     ip->ip_id = pid;
     ip->ip_off = 0x0;        // fragment offset
-    ip->ip_ttl = IPDEFTTL;   // time to live (default 64)  - IPTTLDEC
+    ip->ip_ttl = timetolive; // time to live
     ip->ip_p = IPPROTO_ICMP; // ICMP protocol number (1)
     ip->ip_sum = 0;
     ip->ip_src.s_addr = inet_addr("10.28.28.14");
@@ -327,11 +328,9 @@ void PacketBender::recv_icmp_reply_packet()
      * ICMP ping (i.e. ICMP echo) packet in first place.                    *
      ***********************************************************************/
 
-    struct sockaddr_ll saddrll;
-    socklen_t recvsocklen = sizeof(saddrll);
-
     char recvpacket[4096];
-    int rc;
+    struct sockaddr_in from;
+    socklen_t recvsocklen = sizeof(from);
 
     int receive_s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
     if (receive_s < 0)
@@ -341,50 +340,34 @@ void PacketBender::recv_icmp_reply_packet()
         exit(-1);
     }
 
-    struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
-    if (setsockopt(receive_s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)) < 0)
-    {
-        std::cout << "setsockopt RCVTIMEO error!" << std::endl
-                  << std::flush;
-        close(receive_s);
-        exit(-1);
+    recvfrom(receive_s, recvpacket, sizeof(recvpacket), 0, (struct sockaddr *)(struct sockaddr *)&from, &recvsocklen);
+
+    struct ip* ip = (struct ip*) recvpacket;
+    struct icmp* icmp = (struct icmp*) (recvpacket + (ip->ip_hl << 2)); // Shift left by 2 (same as multiply by 4) to convert header length unit from words to bytes
+
+    if(icmp->icmp_type == ICMP_ECHOREPLY) {
+        printf("TTL=%d: Received ICMP Echo Reply from %s\n", timetolive, inet_ntoa(from.sin_addr));
+        close(receive_s); // Close the socket and break the loop when Echo Reply is received
+        return;
     }
 
-    rc = recvfrom(receive_s, recvpacket, sizeof(recvpacket), 0, (struct sockaddr *)&saddrll, &recvsocklen);
-    if (rc == -1)
-    {
-        std::cout << "recvfrom error!" << std::endl
-                  << std::flush;
-        close(receive_s);
-        exit(-1);
-    }
+
+
     close(receive_s);
-    recvpacket[rc] = 0;
 
-    std::cout << "receivedbytes= " << rc << std::flush;
-    std::cout << saddrll.sll_addr << std::flush;
-    std::cout << saddrll.sll_protocol << std::flush;
 }
 
-void PacketBender::bendPackets(const std::string &ipStr)
+void PacketBender::bendPackets(const std::string &ipStr, int ttl)
 {
     struct protoent *protocol;
     int size = 50 * 1024;
     int on = 1;
+    timetolive = ttl;
 
-    /* Protocol: ICMP */
-    if ((protocol = getprotobyname("icmp")) == NULL)
-    {
-        perror("getprotobyname");
-        exit(1);
-    }
 
     // sockfd is a global variable
     if ((sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1)
     {
-        // if( (sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL)) ) <= 0) {
         perror("socket error");
         exit(1);
     }

@@ -21,7 +21,7 @@ public:
     void loadIPs(const std::string& filename);
 
     // Sends ICMP echo requests to all loaded IPs
-    void bendPackets(const std::string& ipStr);
+    void bendPackets(const std::string& ipStr, int ttl);
 
     // Dumps raw memory in hex byte and printable split format
     void dump(const unsigned char *data_buffer, const unsigned int length);

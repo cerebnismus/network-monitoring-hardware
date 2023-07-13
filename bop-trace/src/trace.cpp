@@ -153,7 +153,7 @@ int PacketBender::icmp_echo_header(int pack_no, int ttl)
     ip->ip_ttl = ttl;   // set TTL to input value
     ip->ip_p = IPPROTO_ICMP; // ICMP protocol number (1)
     ip->ip_sum = 0;
-    ip->ip_src.s_addr = inet_addr("1.1.1.1");
+    ip->ip_src.s_addr = inet_addr("10.28.28.14");
     ip->ip_dst.s_addr = dest_addr.sin_addr.s_addr;
     // ip options are not needed right now (maybe later)
     packsize += sizeof(struct ip);
