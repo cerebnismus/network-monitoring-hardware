@@ -1,4 +1,4 @@
-> "Oh no, not again." - The Bowl of Petunias (Another Network Monitoring System)
+> "Oh no, not again." - The Bowl of Petunias (Network Monitoring System)
 
 ## Project Overview
 The Bowl of Petunias project aims to create a comprehensive network monitoring system capable of analyzing the intricate signals traversing the network cosmos. Our mission is to dive into the depths of network data and uncover insights that will leave you contemplating the meaning of life, the universe, and everything.
