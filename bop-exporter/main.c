@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <sys/time.h>
 
+// gcc -shared -o icmp_ping.so -fPIC icmp_ping.c
+
 #define TARGET "8.8.8.8" // Add your target IP
 
 unsigned short checksum(void *b, int len) {
