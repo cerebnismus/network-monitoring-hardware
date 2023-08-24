@@ -5,16 +5,105 @@
 #include <netinet/if_ether.h> // Ethernet header
 #include <netinet/ip.h>       // IP header
 #include <netinet/ip_icmp.h>  // ICMP header
+#include <linux/if_packet.h>  // AF_PACKET
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
 
+#include <sys/ioctl.h>
+#include <net/if.h>
+
 // Compile with this command: (its for python flask metrics service)
 // gcc -shared -o icmp_ping.so -fPIC icmp_ping.c
 
-#define TARGET "10.28.28.13" // Add your target IP
-int bop_icmp_received_counter_total = 0;
+#define ip_destination "10.28.28.13" // Add your target IP
+
+char *ip_gateway = NULL;
+struct sockaddr_in *ip_source = NULL;
+char mac_destination[50];
+unsigned char *mac_source_ptr = NULL;
+char mac_source[50];
+
+void
+get_source() {
+    struct ifreq ifr;
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    // Provide the name of the network interface you're interested in
+    strcpy(ifr.ifr_name, "eth0");
+
+    printf("Source Addresses\n");
+    printf("----------------\n");
+
+    // Fetch the IP address
+    if (ioctl(fd, SIOCGIFADDR, &ifr) != -1) {
+        ip_source = (struct sockaddr_in *)&ifr.ifr_addr;
+        printf("IP: %s\n", inet_ntoa(ip_source->sin_addr));
+    } else {
+        perror("ioctl");
+    }
+
+    // Fetch the MAC address
+    if (ioctl(fd, SIOCGIFHWADDR, &ifr) != -1) {
+        mac_source_ptr = (unsigned char *)ifr.ifr_hwaddr.sa_data;
+        sprintf(mac_source, "%02x:%02x:%02x:%02x:%02x:%02x",
+            mac_source_ptr[0], mac_source_ptr[1], mac_source_ptr[2],
+            mac_source_ptr[3], mac_source_ptr[4], mac_source_ptr[5]);
+        printf("MAC: %s\n\n", mac_source);
+    } else {
+        perror("ioctl");
+    }
+    close(fd);
+}
+
+
+void
+get_first_hop() {
+    char line[100];
+    // Execute "route" command and get the result in pipe
+    FILE *fp = popen("route -n | grep 'UG[ \t]' | awk '{print $2}'", "r");
+    if (fp == NULL) {
+        perror("popen");
+        pclose(fp);
+        exit(EXIT_FAILURE);
+    }
+
+    // Read the gateway IP from the result
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        line[strcspn(line, "\n")] = 0; // Remove newline character
+        ip_gateway = strdup(line);
+    }
+    pclose(fp);
+
+    if (ip_gateway != NULL) {
+        printf("Default gateway\n");
+        printf("---------------\n");
+        printf("IP: %s\n", ip_gateway);
+        // free(ip_gateway);
+    } else {
+        printf("IP: not found\n");
+        free(ip_gateway);
+        exit(EXIT_FAILURE);
+    }
+
+    // Construct a command to get the MAC address from the ARP table
+    char command[100];
+    snprintf(command, sizeof(command), "grep '%s[ \t]' /proc/net/arp | awk '{print $4}'", ip_gateway);
+    // printf("Command: %s\n", command);
+
+    FILE *arp_fp = popen(command, "r");
+    if (fgets(mac_destination, sizeof(mac_destination), arp_fp) != NULL) {
+        // Remove any trailing newline
+        mac_destination[strcspn(mac_destination, "\n")] = 0;
+        printf("MAC: %s\n\n", mac_destination);
+    } else {
+        printf("MAC: not found\n");
+        pclose(arp_fp);
+        exit(EXIT_FAILURE);
+    }
+    pclose(arp_fp);
+}
 
 unsigned short 
 checksum(void *b, int len) {
@@ -47,62 +136,99 @@ print_raw_data(unsigned char *data, int length) {
 int 
 main() {
 
-    // this needs to be in for loop to run continously outside the main function
-    struct icmphdr icmp_hdr;
-    struct sockaddr_in addr;
-    int sockfd, ret, ret2;
-    char packet[8];
+    // TODO: this needs to be in for loop to run continously outside the main function
 
-    // latency metrics variables
-    struct timeval start, end;
-    double latency;
-
+    // Socket file descriptor for sending/receiving packets
     // sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+    // sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+    int sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP));
     if (sockfd < 0) {
         perror("socket");
         return EXIT_FAILURE;
     }
 
-    // Determine Next Hop (gateway) MAC Address
 
-
-    struct ethhdr *eth = (struct ethhdr *) packet;
+    // Ethernet packet
+    get_source();
+    get_first_hop();
+    char eth_packet[14];
+    struct ethhdr *eth = (struct ethhdr *) eth_packet;
 
     // Set destination and source MAC address
-    // You will need to fill these with correct values
-    memcpy(eth->h_dest, DEST_MAC, ETH_ALEN);
-    memcpy(eth->h_source, SRC_MAC, ETH_ALEN);
+    memcpy(eth->h_dest, mac_destination, ETH_ALEN);
+    memcpy(eth->h_source, mac_source, ETH_ALEN);
 
     eth->h_proto = htons(ETH_P_IP); // Indicate next header is IP
 
+    // IP packet
+    char ip_packet[20];
+    struct iphdr *ip = (struct iphdr *) ip_packet;
 
+    // Set IP header fields
+    ip->ihl = 5; // Header length
+    ip->version = 4; // IPv4
+    ip->tos = 0; // Type of service
+    ip->tot_len = htons(20 + 8); // Total length
+    ip->id = htons(0x1234); // Identification
+    ip->frag_off = 0; // Fragment offset
+    ip->ttl = 64; // Time to live
+    ip->protocol = IPPROTO_ICMP; // Next protocol is ICMP
+    ip->check = 0; // We will calculate the checksum later
+    ip->saddr = inet_addr(inet_ntoa(ip_source->sin_addr)); // Source IP address
+    ip->daddr = inet_addr(ip_destination); // Destination IP address
+    // options and padding are not used here
+    
+    // Calculate IP checksum
+    ip->check = checksum(ip_packet, 20);
 
-    addr.sin_family = AF_INET;
-    inet_pton(AF_INET, TARGET, &addr.sin_addr);
+    // ICMP packet
+    char icmp_packet[8];
+    struct icmphdr *icmp = (struct icmphdr *) icmp_packet;
 
-    memset(&icmp_hdr, 0, sizeof(icmp_hdr));
-    icmp_hdr.type = ICMP_ECHO;
-    icmp_hdr.un.echo.id = htons(0x1234);
-    icmp_hdr.checksum = checksum(&icmp_hdr, sizeof(icmp_hdr));
+    // Set ICMP header fields
+    icmp->type = ICMP_ECHO; // ICMP type
+    icmp->code = 0; // ICMP sub type
+    icmp->un.echo.id = 0; // Identifier
+    icmp->un.echo.sequence = 0; // Sequence number
+    icmp->checksum = 0; // We will calculate the checksum later
+    
+    // Calculate ICMP checksum
+    icmp->checksum = checksum(icmp_packet, 8);
 
-    memcpy(packet, &icmp_hdr, sizeof(icmp_hdr));
+    // Construct final packet
+    char packet[42];
+    memcpy(packet, eth_packet, 14);
+    memcpy(packet + 14, ip_packet, 20);
+    memcpy(packet + 34, icmp_packet, 8);
 
-    gettimeofday(&start, NULL);
-    ret = sendto(sockfd, packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr));
-    if (ret <= 0) {
+    // craft packet
+    int ifindex = if_nametoindex("eth0"); // Replace with the correct interface name
+
+    struct sockaddr_ll addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sll_ifindex = ifindex;
+    addr.sll_protocol = htons(ETH_P_IP); // Specify the next protocol (IP in this case)
+    addr.sll_family = AF_PACKET;
+    // addr.sll_halen = ETH_ALEN; // MAC address length is 6 bytes
+    // memcpy(addr.sll_addr, mac_destination, ETH_ALEN); // Destination MAC
+    // addr.sll_addr[6] = 0x00; // Not used
+    // addr.sll_addr[7] = 0x00; // Not used
+
+    // addr.sin_port = 0; // Not needed in SOCK_RAW
+    // addr.sin_addr.s_addr = inet_addr(ip_destination);
+    addr.sll_halen = ETH_ALEN; // MAC address length is 6 bytes
+    memcpy(addr.sll_addr, mac_destination, ETH_ALEN); // Destination MAC
+    memcpy(addr.sll_addr, mac_source, ETH_ALEN); // Source MAC
+
+    // Send packet
+    int sock_check = sendto(sockfd, packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr));
+    printf("sock_check %d \n", sock_check);
+    if (sock_check < 0) {
         perror("sendto");
         return EXIT_FAILURE;
     }
-    // Receive and handle response for expose imcp metrics
-    char buffer[64] = {0};
-    struct sockaddr_in servaddr;
-    int len = sizeof(servaddr);
-    ret2 = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&servaddr, &len);
-    if (ret2 <= 0) {
-        perror("recvfrom");
-        return EXIT_FAILURE;
-    }
+
+
 
     /***********************************************************************
      * Format: icmp_echo_header                                            *
@@ -141,42 +267,7 @@ main() {
      *                                                                     *
      **********************************************************************/
 
-    // get the response icmp + ip packet header
-    // TODO: checksum validation for icmp and ip
-    struct icmphdr *icmp_hdr_response = (struct icmphdr *)buffer;
-    struct iphdr *ip_hdr_response = (struct iphdr *)buffer;
-
-    print_raw_data(buffer, sizeof(buffer));
-
-
-    // get the icmp type and code
-    int type = icmp_hdr_response->type;
-    int code = icmp_hdr_response->code;
-
-    // get the ip source and destination address
-    char source_ip[INET_ADDRSTRLEN];
-    char dest_ip[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(ip_hdr_response->saddr), source_ip, INET_ADDRSTRLEN);
-    inet_ntop(AF_INET, &(ip_hdr_response->daddr), dest_ip, INET_ADDRSTRLEN);
-
-    //get all the ip header fields
-    int version = ip_hdr_response->version;
-    int ihl = ip_hdr_response->ihl;
-    int tos = ip_hdr_response->tos;
-    int tot_len = ip_hdr_response->tot_len;
-    int id = ip_hdr_response->id;
-    int frag_off = ip_hdr_response->frag_off;
-    int ttl = ip_hdr_response->ttl;
-
-    // print for debug
-    printf("ICMP type: %d\n", type);
-    printf("ICMP code: %d\n", code);
-    printf("IP source: %s\n", source_ip);
-    printf("IP dest: %s\n", dest_ip);
-
-
-
-
+/*
     // icmp metrics
     printf("# HELP bop_icmp_type int value of icmp type\n");
     printf("# TYPE bop_icmp_type summary\n");
@@ -200,7 +291,7 @@ main() {
     printf("# TYPE bop_icmp_latency_calculated_microseconds gauge\n");
     printf("bop_icmp_latency_calculated_microseconds %.2e\n", latency);
 
-
+*/
 
     close(sockfd);
     return EXIT_SUCCESS;
