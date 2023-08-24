@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <netinet/ip_icmp.h> // ICMP header
-#include <netinet/ip.h>      // IP header
+#include <netinet/if_ether.h> // Ethernet header
+#include <netinet/ip.h>       // IP header
+#include <netinet/ip_icmp.h>  // ICMP header
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -12,7 +13,7 @@
 // Compile with this command: (its for python flask metrics service)
 // gcc -shared -o icmp_ping.so -fPIC icmp_ping.c
 
-#define TARGET "8.8.8.8" // Add your target IP
+#define TARGET "10.28.28.13" // Add your target IP
 int bop_icmp_received_counter_total = 0;
 
 unsigned short 
@@ -31,6 +32,17 @@ checksum(void *b, int len) {
     return result;
 }
 
+void 
+print_raw_data(unsigned char *data, int length) {
+    int i;
+    for(i = 0; i < length; i++) {
+        printf("%02x ", data[i]); // Print each byte in hexadecimal
+        if ((i + 1) % 16 == 0) { // Format nicely, 16 bytes per line
+            printf("\n");
+        }
+    }
+    printf("\n");
+}
 
 int 
 main() {
@@ -45,11 +57,26 @@ main() {
     struct timeval start, end;
     double latency;
 
-    sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    // sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sockfd < 0) {
         perror("socket");
         return EXIT_FAILURE;
     }
+
+    // Determine Next Hop (gateway) MAC Address
+
+
+    struct ethhdr *eth = (struct ethhdr *) packet;
+
+    // Set destination and source MAC address
+    // You will need to fill these with correct values
+    memcpy(eth->h_dest, DEST_MAC, ETH_ALEN);
+    memcpy(eth->h_source, SRC_MAC, ETH_ALEN);
+
+    eth->h_proto = htons(ETH_P_IP); // Indicate next header is IP
+
+
 
     addr.sin_family = AF_INET;
     inet_pton(AF_INET, TARGET, &addr.sin_addr);
@@ -68,7 +95,7 @@ main() {
         return EXIT_FAILURE;
     }
     // Receive and handle response for expose imcp metrics
-    char buffer[1024] = {0};
+    char buffer[64] = {0};
     struct sockaddr_in servaddr;
     int len = sizeof(servaddr);
     ret2 = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&servaddr, &len);
@@ -119,6 +146,9 @@ main() {
     struct icmphdr *icmp_hdr_response = (struct icmphdr *)buffer;
     struct iphdr *ip_hdr_response = (struct iphdr *)buffer;
 
+    print_raw_data(buffer, sizeof(buffer));
+
+
     // get the icmp type and code
     int type = icmp_hdr_response->type;
     int code = icmp_hdr_response->code;
@@ -137,7 +167,6 @@ main() {
     int id = ip_hdr_response->id;
     int frag_off = ip_hdr_response->frag_off;
     int ttl = ip_hdr_response->ttl;
-    
 
     // print for debug
     printf("ICMP type: %d\n", type);
