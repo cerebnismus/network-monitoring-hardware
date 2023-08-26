@@ -306,8 +306,10 @@ main() {
     // Using gettimeofday start time for latency calculation
     // send and receive time / 2 = latency (one way)
     struct timeval tv;
-    gettimeofday(&tv, NULL);
-    long long send_time_ms = tv.tv_sec*1000LL + tv.tv_usec/1000; // calculate milliseconds
+    gettimeofday(&tv, NULL); // calculate milliseconds
+    long long send_time_ms = tv.tv_sec*1000LL + tv.tv_usec/1000; 
+    // https://www.youtube.com/watch?v=fregObNcHC8
+
 
     // SEND PACKET
     int sock_check_send = sendto(sockfd, packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr));
@@ -334,6 +336,9 @@ main() {
         }
     }
 
+    gettimeofday(&tv, NULL); // calculate milliseconds
+    long long recv_time_ms = tv.tv_sec*1000LL + tv.tv_usec/1000; 
+
     struct ethhdr *ethrecv = (struct ethhdr*) recvpacket;
     struct iphdr *iprecv = (struct iphdr*) (recvpacket + sizeof(struct ethhdr));
     struct icmphdr *icmprecv = (struct icmphdr*) (recvpacket + sizeof(struct ethhdr) + sizeof(struct iphdr));
@@ -354,7 +359,7 @@ main() {
     printf("# TYPE bop_icmp_latency_calculated_microseconds gauge\n");
 
     ///////////////////////////
-    printf("bop_icmp_latency_calculated_microseconds %ld\n", (end.tv_usec - start.tv_usec));
+    printf("bop_icmp_latency_calculated_microseconds %ld\n", (recv_time_ms - send_time_ms));
 
     close(sockfd);
     free(mac_destination_ptr);
