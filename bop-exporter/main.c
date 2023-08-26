@@ -15,8 +15,38 @@
 
 /*
  *  You can capture packets by wireshark, tshark or tcpdump like this:
+ *         tcpdump -X -s0 -i en3 -p icmp
  *         tcpdump -X -s0 -i eth0 -p icmp
- */
+ 
+
+SOCKET CREATION - 1024 per process for non-root users (ulimit -n)
+Root users can create about 65,000 sockets per process. Which is the maximum number of ports.
+
+The maximum number of sockets that can be created in a Linux system depends on various factors, 
+such as the system's available resources and kernel parameters. However, a common limit set 
+for the maximum number of file descriptors, which includes sockets, is 1024 per process 
+for user-level applications. This can usually be viewed or modified using the ulimit command.
+
+ulimit -n [new limit]
+
+In Red Hat Enterprise Linux (RHEL), the maximum number of open files (which includes sockets) 
+is often set to 1024 per process for non-root users, similar to other Linux distributions. 
+You can check the current limit using the ulimit -n command.
+
+For permanent changes, you can edit the /etc/security/limits.conf file to set hard and soft limits. 
+The format in limits.conf would look something like:
+
+username soft nofile 4096
+username hard nofile 8192
+
+You can also set these limits for groups or for all users.
+Another way to modify this setting is to directly interact with systemd by using the systemctl command, 
+although this usually applies to services rather than user sessions.
+For more comprehensive control, especially in a large-scale enterprise environment, 
+you may also use centralized management tools that RHEL supports, such as Red Hat Satellite.
+Be sure to consult the specific documentation for your RHEL version as features and configuration options can change.
+
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,17 +61,10 @@
 #include <arpa/inet.h>        // inet_addr(), etc.
 #include <sys/ioctl.h>        // system calls
 #include <net/if.h>           // struct ifreq (for getting MAC address)
-#include <sys/select.h>       // select() (for timeout on recvfrom() function)
-#include <time.h>             // time function for timestamp
-
-// gettimeofday function for custom timestamp i think its worse than time function
 #include <sys/time.h> 
 
-
-// Compile with this command: (its for python flask metrics service)
-// gcc -shared -o icmp.so -fPIC icmp.c
-
-#define ip_destination "10.28.28.13" // Add your target IP
+#define ip_destination "8.8.8.8" // Add your target IP
+#define iface "eth0" // Add your interface name
 
 char *ip_gateway = NULL;
 char *ip_source = NULL;
@@ -52,21 +75,20 @@ unsigned char *mac_source_ptr = NULL;
 char mac_source[50];
 
 
-void
-get_source() {
+void get_source() {
     struct ifreq ifr;
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
 
     // Provide the name of the network interface you're interested in
-    strcpy(ifr.ifr_name, "eth0");
+    strcpy(ifr.ifr_name, iface);
 
-    printf("Source Addresses\n");
-    printf("----------------\n");
+    // printf("Source Addresses\n");
+    // printf("----------------\n");
 
     // Fetch the IP address
     if (ioctl(fd, SIOCGIFADDR, &ifr) != -1) {
         ip_source = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
-        printf("IP: %s\n", ip_source);
+        // printf("IP: %s\n", ip_source);
     } else {
         perror("ioctl");
     }
@@ -77,7 +99,7 @@ get_source() {
         sprintf(mac_source, "%02x:%02x:%02x:%02x:%02x:%02x",
             mac_source_ptr[0], mac_source_ptr[1], mac_source_ptr[2],
             mac_source_ptr[3], mac_source_ptr[4], mac_source_ptr[5]);
-        printf("MAC: %s\n\n", mac_source);
+        // printf("MAC: %s\n\n", mac_source);
     } else {
         perror("ioctl");
     }
@@ -86,8 +108,7 @@ get_source() {
 }
 
 
-void 
-get_first_hop() {
+void get_first_hop() {
     char line[100];
     // Execute "route" command and get the result in pipe
     FILE *fp = popen("route -n | grep 'UG[ \t]' | awk '{print $2}'", "r");
@@ -105,9 +126,9 @@ get_first_hop() {
     pclose(fp);
 
     if (ip_gateway != NULL) {
-        printf("Default gateway\n");
-        printf("---------------\n");
-        printf("IP: %s\n", ip_gateway);
+        // printf("Default gateway\n");
+        // printf("---------------\n");
+        // printf("IP: %s\n", ip_gateway);
         // free(ip_gateway);
     } else {
         printf("IP: not found\n");
@@ -124,7 +145,7 @@ get_first_hop() {
     if (fgets(mac_destination, sizeof(mac_destination), arp_fp) != NULL) {
         // Remove any trailing newline
         mac_destination[strcspn(mac_destination, "\n")] = 0;
-        printf("MAC: %s\n\n", mac_destination);
+        // printf("MAC: %s\n\n", mac_destination);
     } else {
         printf("MAC: not found\n");
         pclose(arp_fp);
@@ -152,8 +173,7 @@ get_first_hop() {
     }
 }
 
-unsigned short 
-checksum(void *b, int len) {
+unsigned short checksum(void *b, int len) {
     unsigned short *buf = b;
     unsigned int sum = 0;
     unsigned short result;
@@ -168,26 +188,31 @@ checksum(void *b, int len) {
     return result;
 }
 
-void 
-print_raw_data(unsigned char *data, int length) {
+void print_raw_data(unsigned char *data, int length) {
     int i;
-    for(i = 0; i < length; i++) {
-        printf("%02x ", data[i]); // Print each byte in hexadecimal
-        if ((i + 1) % 16 == 0) { // Format nicely, 16 bytes per line
-            printf("\n");
+    printf("  0x0000:  ");
+    for(i = 0; i < length; i++) { // Print each 2 byte in hexadecimal with a space in the end (e.g. 0a1f 2c3b ...)
+        printf("%02x", data[i]);
+        if ((i + 1) % 2 == 0) {
+            printf(" ");
+        }
+        if (i == 15) {
+            printf("\n  0x0010:  ");
+        }
+        if (i == 31) {
+            printf("\n  0x0020:  ");
         }
     }
     printf("\n");
 }
 
 
-int 
-main() {
+int main() {
     // TODO: this needs to be in for loop to run continously outside the main function
     int sockfd = socket(AF_PACKET, SOCK_RAW, ETH_P_IP);
     if (sockfd < 0) {
         perror("socket");
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
     // ETHERNET II HEADER
@@ -210,6 +235,10 @@ main() {
     eth->h_source[4] = mac_source_ptr[4];
     eth->h_source[5] = mac_source_ptr[5];
 
+    // Indicate next header is IP
+    eth->h_proto = htons(ETH_P_IP);
+
+/*
     printf("eth->h_dest[0] %02x \n", eth->h_dest[0]);
     printf("eth->h_dest[1] %02x \n", eth->h_dest[1]);
     printf("eth->h_dest[2] %02x \n", eth->h_dest[2]);
@@ -223,9 +252,7 @@ main() {
     printf("eth->h_source[3] %02x \n", eth->h_source[3]);
     printf("eth->h_source[4] %02x \n", eth->h_source[4]);
     printf("eth->h_source[5] %02x \n", eth->h_source[5]);
-
-    // Indicate next header is IP
-    eth->h_proto = htons(ETH_P_IP);
+*/
 
     // IP HEADER
     char ip_packet[20];
@@ -236,9 +263,9 @@ main() {
     ip->version = 4; // IPv4
     ip->tos = 0; // Type of service
     ip->tot_len = htons(20 + 8); // Total length
-    ip->id = htons(0x29A); // Identification
+    ip->id = htons(1); // Identification
     ip->frag_off = 0x0000; // i cant set this to 0x4000 or 0x02 (dont know why)
-    ip->ttl = MAXTTL; // Time to live
+    ip->ttl = IPDEFTTL; // Time to live
     ip->protocol = IPPROTO_ICMP; // Next protocol is ICMP
     ip->check = 0; // We will calculate the checksum later
     ip->saddr = inet_addr(ip_source); // Source IP address
@@ -264,104 +291,131 @@ main() {
     // Calculate ICMP checksum
     icmp->checksum = checksum(icmp_packet, 8);
 
-    // Adding a 64-bit timestamp to the ICMP data
-    // uint64_t timestamp = (uint64_t)time(NULL); // 8 bytes
-
     // Construct FINAL PACKET
     char packet[42];
     memcpy(packet, eth_packet, 14);
     memcpy(packet + 14, ip_packet, 20);
     memcpy(packet + 34, icmp_packet, 8);
     // memcpy(packet + 42, &timestamp, 8);
-    // instead of adding timestamp to the packet we can use gettimeofday function
-    // gettimeofday function is may not be more accurate but its more faster than adding timestamp to the packet
 
     // Construct sockaddr_ll struct for sending packet out of interface index
     struct sockaddr_ll addr;
-    int ifindex = if_nametoindex("eth0"); // TODO: Dynamic interface name from config
-    addr.sll_ifindex = ifindex;           // Interface index number (eth0) (see "ifconfig" command)
-    addr.sll_protocol = htons(ETH_P_ALL);  // Ethernet type (see /usr/include/linux/if_ether.h)
+    int ifindex = if_nametoindex(iface);  // TODO: Dynamic interface name from config
+    addr.sll_ifindex = ifindex;           // Interface index number (see "ifconfig" command)
+    addr.sll_protocol = htons(ETH_P_IP);  // Ethernet type (see /usr/include/linux/if_ether.h)
     addr.sll_family = AF_PACKET;          // Always AF_PACKET
     memcpy(addr.sll_addr, mac_destination, ETH_ALEN); // Destination MAC
 
-    // Crafted packet in hex format
-    printf("\nCrafted packet\n");
-    print_raw_data(packet, sizeof(packet));
-
-    // SELECT STRUCT
-    fd_set readfds;
-    FD_ZERO(&readfds);
-    FD_SET(sockfd, &readfds);
-
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 10;
-
-    // Receive Packet
-    char recvpacket[42];
-    struct sockaddr_in from;
-    socklen_t recvsocklen = sizeof(from);
-
-
-    // Using gettimeofday start time for latency calculation
-    // send and receive time / 2 = latency (one way)
-    struct timeval tv;
-    gettimeofday(&tv, NULL); // calculate milliseconds
-    long long send_time_ms = tv.tv_sec*1000LL + tv.tv_usec/1000; 
-    // https://www.youtube.com/watch?v=fregObNcHC8
-
+    struct timeval start, end;    
+    gettimeofday(&start, NULL); // calculate milliseconds
 
     // SEND PACKET
     int sock_check_send = sendto(sockfd, packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr));
-    printf("sock_check %d \n\n", sock_check_send);
     if (sock_check_send < 0) {
         perror("sendto");
+        exit(EXIT_FAILURE);
+    }
+    // printf("\nsock_check_send %d \n", sock_check_send);
+    // print_raw_data(packet, sizeof(packet));
+
+    // RECEIVE PACKET
+    char recvpacket[28];
+    struct sockaddr_in from;
+    from = (struct sockaddr_in){.sin_family = AF_INET, .sin_port = htons(0), .sin_addr = inet_addr(ip_destination)};
+    socklen_t recvsocklen = sizeof(from);
+
+    int sockfd_recv = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sockfd_recv < 0) {
+        perror("socket");
         return EXIT_FAILURE;
     }
 
-    // RECEIVE PACKET
-    // for loop to receive packet when socket is ready
-    for (int i = 0; i < 10; i++) {
-        int retval = select(sockfd + 1, &readfds, NULL, NULL, &timeout);
-        if (retval == -1) {
-            perror("select()");
-        } else if (retval) {
-            printf("Data is available now.\n");
-            int sock_check_recv = recvfrom(sockfd, recvpacket, sizeof(recvpacket), 0, (struct sockaddr *)(struct sockaddr *)&from, &recvsocklen);
-            printf("sock_check %d \n\n", sock_check_recv);
-            break;
-        } else {
-            printf("No data within timeout: %ld microseconds.\n", timeout.tv_usec);
-            break;
-        }
+    int sock_check_recv = recvfrom(sockfd_recv, recvpacket, sizeof(recvpacket), 0, (struct sockaddr *)(struct sockaddr *)&from, &recvsocklen);
+    if (sock_check_recv < 0) {
+        perror("recvfrom");
+        return EXIT_FAILURE;
+    }
+    // printf("\nsock_check_recv %d \n", sock_check_recv);
+    // print_raw_data(recvpacket, sizeof(recvpacket));
+
+    gettimeofday(&end, NULL);  // Store end time
+    long seconds = end.tv_sec - start.tv_sec;
+    long microseconds = end.tv_usec - start.tv_usec;
+
+    if (microseconds < 0) {
+        seconds--;
+        microseconds += 1000000;
     }
 
-    gettimeofday(&tv, NULL); // calculate milliseconds
-    long long recv_time_ms = tv.tv_sec*1000LL + tv.tv_usec/1000; 
+    double elapsed = seconds + microseconds * 1e-6 * 1000;
+    // printf("Response time: %.3f ms\n\n", elapsed);
+    int elapsed_int = (int)(elapsed * 1000); 
+    // printf("Response time: %.4e \n\n", elapsed_int);
+    // sample -> 9.63147392e+09 output -> 3.0691e+01
 
-    struct ethhdr *ethrecv = (struct ethhdr*) recvpacket;
-    struct iphdr *iprecv = (struct iphdr*) (recvpacket + sizeof(struct ethhdr));
-    struct icmphdr *icmprecv = (struct icmphdr*) (recvpacket + sizeof(struct ethhdr) + sizeof(struct iphdr));
+    // print recvpacket
+    struct iphdr *iprecv = (struct iphdr *)recvpacket;
+    struct icmphdr *icmprecv = (struct icmphdr *)(recvpacket + (iprecv->ihl << 2));
 
-    printf("Received packet\n");
-    print_raw_data(recvpacket, sizeof(recvpacket));
+    // Display metrics for Prometheus
+    printf("# HELP bop_icmp_ip_version IP header version\n");
+    printf("# TYPE bop_icmp_ip_version gauge\n");
+    printf("bop_icmp_ip_version %d\n", iprecv->version);
+
+    printf("# HELP bop_icmp_ip_ihl IP header IHL\n");
+    printf("# TYPE bop_icmp_ip_ihl gauge\n");
+    printf("bop_icmp_ip_ihl %d\n", iprecv->ihl);
+
+    printf("# HELP bop_icmp_ip_tos IP header TOS\n");
+    printf("# TYPE bop_icmp_ip_tos gauge\n");
+    printf("bop_icmp_ip_tos %d\n", iprecv->tos);
+
+    printf("# HELP bop_icmp_ip_tot_len IP total length\n");
+    printf("# TYPE bop_icmp_ip_tot_len gauge\n");
+    printf("bop_icmp_ip_tot_len %d\n", ntohs(iprecv->tot_len));
+
+    printf("# HELP bop_icmp_ip_frag_off IP fragment offset\n");
+    printf("# TYPE bop_icmp_ip_frag_off gauge\n");
+    printf("bop_icmp_ip_frag_off %d\n", iprecv->frag_off);
+
+    printf("# HELP bop_icmp_ip_ttl IP time to live\n");
+    printf("# TYPE bop_icmp_ip_ttl gauge\n");
+    printf("bop_icmp_ip_ttl %d\n", iprecv->ttl);
+
+    printf("# HELP bop_icmp_ip_protocol IP protocol\n");
+    printf("# TYPE bop_icmp_ip_protocol gauge\n");
+    printf("bop_icmp_ip_protocol %d\n", iprecv->protocol);
+
+    printf("# HELP bop_icmp_ip_saddr IP source address\n");
+    printf("# TYPE bop_icmp_ip_saddr gauge\n");
+    printf("bop_icmp_ip_saddr %s\n", inet_ntoa(*(struct in_addr *)&iprecv->saddr));
+
+    printf("# HELP bop_icmp_ip_daddr IP destination address\n");
+    printf("# TYPE bop_icmp_ip_daddr gauge\n");
+    printf("bop_icmp_ip_daddr %s\n", inet_ntoa(*(struct in_addr *)&iprecv->daddr));
 
     printf("# HELP bop_icmp_type int value of icmp type\n");
     printf("# TYPE bop_icmp_type summary\n");
-    printf("bop_icmp_type{type=\"%d\"} %d\n", icmprecv->type, icmprecv->type); // first %d is for label and can be changed to string like ECHO_REPLY
+    printf("bop_icmp_type{type=\"%d\"} %d\n", icmprecv->type, icmprecv->type);
 
     printf("# HELP bop_icmp_code int value of icmp code\n");
     printf("# TYPE bop_icmp_code summary\n");
-    printf("bop_icmp_code{code=\"%d\"} %d\n", icmprecv->code, icmprecv->code); // first %d is for label and can be changed to string like ICMP_EXC_TTL
+    printf("bop_icmp_code{code=\"%d\"} %d\n", icmprecv->code, icmprecv->code);
 
-    // This will print the latency in scientific notation with 2 digits after the decimal point
-    printf("# HELP bop_icmp_latency_calculated_microseconds duration of transmitting\n");
-    printf("# TYPE bop_icmp_latency_calculated_microseconds gauge\n");
+    printf("# HELP bop_icmp_response_calculated_milliseconds duration of transmitting packet\n");
+    printf("# TYPE bop_icmp_response_calculated_milliseconds gauge\n");
+    printf("bop_icmp_response_calculated_milliseconds %.4e\n", elapsed_int);
 
-    ///////////////////////////
-    printf("bop_icmp_latency_calculated_microseconds %ld\n", (recv_time_ms - send_time_ms));
+    printf("# HELP bop_icmp_sin_family sin_family of icmp response\n");
+    printf("# TYPE bop_icmp_sin_family gauge\n");
+    printf("bop_icmp_sin_family %d\n", from.sin_family);
+
+    printf("# HELP bop_icmp_sin_port sin_port of icmp response\n");
+    printf("# TYPE bop_icmp_sin_port gauge\n");
+    printf("bop_icmp_sin_port %d\n", from.sin_port);
 
     close(sockfd);
+    close(sockfd_recv);
     free(mac_destination_ptr);
     return EXIT_SUCCESS;
 }
