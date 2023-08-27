@@ -1,0 +1,36 @@
+# HELP bop_icmp_ip_version IP header version
+# TYPE bop_icmp_ip_version gauge
+bop_icmp_ip_version 4
+# HELP bop_icmp_ip_ihl IP header IHL
+# TYPE bop_icmp_ip_ihl gauge
+bop_icmp_ip_ihl 5
+# HELP bop_icmp_ip_tos IP header TOS
+# TYPE bop_icmp_ip_tos gauge
+bop_icmp_ip_tos 0
+# HELP bop_icmp_ip_tot_len IP total length
+# TYPE bop_icmp_ip_tot_len gauge
+bop_icmp_ip_tot_len 28
+# HELP bop_icmp_ip_frag_off IP fragment offset
+# TYPE bop_icmp_ip_frag_off gauge
+bop_icmp_ip_frag_off 0
+# HELP bop_icmp_ip_ttl IP time to live
+# TYPE bop_icmp_ip_ttl gauge
+bop_icmp_ip_ttl 60
+# HELP bop_icmp_ip_protocol IP protocol
+# TYPE bop_icmp_ip_protocol gauge
+bop_icmp_ip_protocol 1
+# HELP bop_icmp_type int value of icmp type
+# TYPE bop_icmp_type summary
+bop_icmp_type{type="0"} 0
+# HELP bop_icmp_code int value of icmp code
+# TYPE bop_icmp_code summary
+bop_icmp_code{code="0"} 0
+# HELP bop_icmp_response_calculated_milliseconds duration of transmitting packet
+# TYPE bop_icmp_response_calculated_milliseconds gauge
+bop_icmp_response_calculated_milliseconds 6.9001e-310
+# HELP bop_icmp_sin_family sin_family of icmp response
+# TYPE bop_icmp_sin_family gauge
+bop_icmp_sin_family 2
+# HELP bop_icmp_sin_port sin_port of icmp response
+# TYPE bop_icmp_sin_port gauge
+bop_icmp_sin_port 0
