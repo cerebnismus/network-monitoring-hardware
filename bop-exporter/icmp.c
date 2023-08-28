@@ -1,6 +1,8 @@
 // Compile with this command: (its for python flask metrics service)
 // gcc -shared -o main.so -fPIC main.c
 
+// icmp->un.echo.sequence += 1; // Sequence number (increment by 1 for each packet)
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>           // memcpy, memset, etc.
@@ -15,13 +17,31 @@
 #include <sys/ioctl.h>        // system calls
 #include <net/if.h>           // struct ifreq (for getting MAC address)
 #include <sys/time.h> 
+#include <pthread.h>          // for threads and mutex locks
 
-#define ip_destination "8.8.8.8" // Add your target IP
+int packet_count = 0;
+int max_threads = 0;
+
+pthread_mutex_t transmitMutex = PTHREAD_MUTEX_INITIALIZER;
+unsigned int irreleventPings = 0;
+unsigned int successfulPings = 0;
+unsigned int failedPings = 0;
+
+void logMessage(char *message) {
+    time_t currentTime;
+    struct tm *localTime;
+
+    time(&currentTime);
+    localTime = localtime(&currentTime);
+
+    printf("%02d:%02d:%02d %s", localTime->tm_hour, localTime->tm_min, localTime->tm_sec, message);
+}
+
+#define ip_destination target_ip
 #define iface "eth0" // Add your interface name
 
 char *ip_gateway = NULL;
 char *ip_source = NULL;
-
 unsigned char *mac_destination_ptr = NULL;
 char mac_destination[50];
 unsigned char *mac_source_ptr = NULL;
@@ -35,15 +55,8 @@ void get_source() {
     // Provide the name of the network interface you're interested in
     strcpy(ifr.ifr_name, iface);
 
-    // printf("Source Addresses\n");
-    // printf("----------------\n");
-
-    // Fetch the IP address
-    if (ioctl(fd, SIOCGIFADDR, &ifr) != -1) {
+    if (ioctl(fd, SIOCGIFADDR, &ifr) != -1) {  // Fetch the IP address
         ip_source = inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
-        // printf("IP: %s\n", ip_source);
-    } else {
-        perror("ioctl");
     }
  
     // Fetch the MAC address
@@ -52,18 +65,13 @@ void get_source() {
         sprintf(mac_source, "%02x:%02x:%02x:%02x:%02x:%02x",
             mac_source_ptr[0], mac_source_ptr[1], mac_source_ptr[2],
             mac_source_ptr[3], mac_source_ptr[4], mac_source_ptr[5]);
-        // printf("MAC: %s\n\n", mac_source);
-    } else {
-        perror("ioctl");
     }
     close(fd);
-    // printf("file descriptor closed\n");
 }
 
 
 void get_first_hop() {
-    char line[100];
-    // Execute "route" command and get the result in pipe
+    char line[100];  // Execute "route" command and get the result in pipe
     FILE *fp = popen("route -n | grep 'UG[ \t]' | awk '{print $2}'", "r");
     if (fp == NULL) {
         perror("popen");
@@ -71,34 +79,24 @@ void get_first_hop() {
         exit(EXIT_FAILURE);
     }
 
-    // Read the gateway IP from the result
-    while (fgets(line, sizeof(line), fp) != NULL) {
+    while (fgets(line, sizeof(line), fp) != NULL) {  // Read the gateway IP from the result
         line[strcspn(line, "\n")] = 0; // Remove newline character
         ip_gateway = strdup(line);
     }
     pclose(fp);
 
-    if (ip_gateway != NULL) {
-        // printf("Default gateway\n");
-        // printf("---------------\n");
-        // printf("IP: %s\n", ip_gateway);
-        // free(ip_gateway);
-    } else {
+    if (ip_gateway == NULL) {
         printf("IP: not found\n");
         free(ip_gateway);
         exit(EXIT_FAILURE);
     }
 
-    // Construct a command to get the MAC address from the ARP table
-    char command[100];
+    char command[100];  // Construct a command to get the MAC address from the ARP table
     snprintf(command, sizeof(command), "grep '%s[ \t]' /proc/net/arp | awk '{print $4}'", ip_gateway);
-    // printf("Command: %s\n", command);
 
     FILE *arp_fp = popen(command, "r");
     if (fgets(mac_destination, sizeof(mac_destination), arp_fp) != NULL) {
-        // Remove any trailing newline
-        mac_destination[strcspn(mac_destination, "\n")] = 0;
-        // printf("MAC: %s\n\n", mac_destination);
+        mac_destination[strcspn(mac_destination, "\n")] = 0;  // Remove any trailing newline
     } else {
         printf("MAC: not found\n");
         pclose(arp_fp);
@@ -106,26 +104,20 @@ void get_first_hop() {
     }
     pclose(arp_fp);
 
-    // Convert MAC address from string to array of unsigned char
-    int values[6];
-    int i;
-
-    // Allocating memory for the MAC address bytes
+    int i, values[6];  // Convert MAC address from string to array of unsigned char
     mac_destination_ptr = (unsigned char *)malloc(6 * sizeof(unsigned char));
     if (mac_destination_ptr == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
 
-    // Parsing the MAC address string into 6 integer values
     sscanf(mac_destination, "%x:%x:%x:%x:%x:%x", &values[0], &values[1], &values[2], &values[3], &values[4], &values[5]);
-
-    // Converting the integer values into unsigned char
-    for(i = 0; i < 6; ++i) {
+    for(i = 0; i < 6; ++i) {  // Converting the integer values into unsigned char
         mac_destination_ptr[i] = (unsigned char) values[i];
     }
 }
 
+// ICMP Checksum computation
 unsigned short checksum(void *b, int len) {
     unsigned short *buf = b;
     unsigned int sum = 0;
@@ -141,40 +133,20 @@ unsigned short checksum(void *b, int len) {
     return result;
 }
 
-void print_raw_data(unsigned char *data, int length) {
-    int i;
-    printf("  0x0000:  ");
-    for(i = 0; i < length; i++) { // Print each 2 byte in hexadecimal with a space in the end (e.g. 0a1f 2c3b ...)
-        printf("%02x", data[i]);
-        if ((i + 1) % 2 == 0) {
-            printf(" ");
-        }
-        if (i == 15) {
-            printf("\n  0x0010:  ");
-        }
-        if (i == 31) {
-            printf("\n  0x0020:  ");
-        }
-    }
-    printf("\n");
-}
 
+void *pingFunction(void *target_ip) {
 
-int main() {
-    // TODO: this needs to be in for loop to run continously outside the main function
-    int sockfd = socket(AF_PACKET, SOCK_RAW, ETH_P_IP);
-    if (sockfd < 0) {
-        perror("socket");
-        exit(EXIT_FAILURE);
+    int sockfd_send = socket(PF_PACKET, SOCK_RAW, ETH_P_IP);
+    if (sockfd_send == -1) {
+        logMessage("Failed to create socket");
+        pthread_exit(0);
     }
 
-    // ETHERNET II HEADER
     get_source();
     get_first_hop();
-    char eth_packet[14]; // Ethernet II header is always 14 bytes
+    char eth_packet[14]; // Ethernet II header
     struct ethhdr *eth = (struct ethhdr *) eth_packet;
 
-    // Set destination and source MAC address
     eth->h_dest[0] = mac_destination_ptr[0];
     eth->h_dest[1] = mac_destination_ptr[1];
     eth->h_dest[2] = mac_destination_ptr[2];
@@ -187,31 +159,11 @@ int main() {
     eth->h_source[3] = mac_source_ptr[3];
     eth->h_source[4] = mac_source_ptr[4];
     eth->h_source[5] = mac_source_ptr[5];
-
-    // Indicate next header is IP
     eth->h_proto = htons(ETH_P_IP);
 
-/*
-    printf("eth->h_dest[0] %02x \n", eth->h_dest[0]);
-    printf("eth->h_dest[1] %02x \n", eth->h_dest[1]);
-    printf("eth->h_dest[2] %02x \n", eth->h_dest[2]);
-    printf("eth->h_dest[3] %02x \n", eth->h_dest[3]);
-    printf("eth->h_dest[4] %02x \n", eth->h_dest[4]);
-    printf("eth->h_dest[5] %02x \n", eth->h_dest[5]);
-
-    printf("eth->h_source[0] %02x \n", eth->h_source[0]);
-    printf("eth->h_source[1] %02x \n", eth->h_source[1]);
-    printf("eth->h_source[2] %02x \n", eth->h_source[2]);
-    printf("eth->h_source[3] %02x \n", eth->h_source[3]);
-    printf("eth->h_source[4] %02x \n", eth->h_source[4]);
-    printf("eth->h_source[5] %02x \n", eth->h_source[5]);
-*/
-
-    // IP HEADER
-    char ip_packet[20];
+    char ip_packet[20]; // IP header
     struct iphdr *ip = (struct iphdr *) ip_packet;
 
-    // Set IP header fields
     ip->ihl = 5; // Header length
     ip->version = 4; // IPv4
     ip->tos = 0; // Type of service
@@ -223,46 +175,154 @@ int main() {
     ip->check = 0; // We will calculate the checksum later
     ip->saddr = inet_addr(ip_source); // Source IP address
     ip->daddr = inet_addr(ip_destination); // Destination IP address
-    // TODO  : options and padding are not used for now
-    // ISSUE : its look like im adding padding data to the packet 
+    ip->check = checksum(ip_packet, 20); // Calculate IP checksum
 
-    // Calculate IP checksum
-    ip->check = checksum(ip_packet, 20);
-
-    // ICMP HEADER
     char icmp_packet[8];
     struct icmphdr *icmp = (struct icmphdr *) icmp_packet;
 
-    // Set ICMP header fields
     icmp->type = ICMP_ECHO; // ICMP type
     icmp->code = 0; // ICMP sub type
-    icmp->un.echo.id = 0; // Identifier
-    icmp->un.echo.sequence = 0; // Sequence number
     icmp->checksum = 0; // We will calculate the checksum later
-    // ICMP data is not used for now
+    icmp->un.echo.id = 0; // Identifier
+    icmp->un.echo.sequence = htons(1); // Sequence number
+    icmp->checksum = checksum(icmp_packet, 8); // Calculate ICMP checksum
 
-    // Calculate ICMP checksum
-    icmp->checksum = checksum(icmp_packet, 8);
+    char sendpacket[42];  // Construct Packet
+    memcpy(sendpacket, eth_packet, 14);
+    memcpy(sendpacket + 14, ip_packet, 20);
+    memcpy(sendpacket + 34, icmp_packet, 8);
 
-    // Construct FINAL PACKET
-    char packet[42];
-    memcpy(packet, eth_packet, 14);
-    memcpy(packet + 14, ip_packet, 20);
-    memcpy(packet + 34, icmp_packet, 8);
-    // memcpy(packet + 42, &timestamp, 8);
-
-    // Construct sockaddr_ll struct for sending packet out of interface index
     struct sockaddr_ll addr;
-    int ifindex = if_nametoindex(iface);  // TODO: Dynamic interface name from config
+    int ifindex = if_nametoindex(iface);  // TODO: Dynamic interface name from argv
     addr.sll_ifindex = ifindex;           // Interface index number (see "ifconfig" command)
     addr.sll_protocol = htons(ETH_P_IP);  // Ethernet type (see /usr/include/linux/if_ether.h)
-    addr.sll_family = AF_PACKET;          // Always AF_PACKET
-    memcpy(addr.sll_addr, mac_destination, ETH_ALEN); // Destination MAC
+    addr.sll_family = PF_PACKET;
+    memcpy(addr.sll_addr, mac_destination, ETH_ALEN);
 
-    struct timeval start, end;    
-    gettimeofday(&start, NULL); // calculate milliseconds
+    char recvpacket[28]; // RECEIVER SOCKET SETUP
+    struct sockaddr_in from;
+    from = (struct sockaddr_in){.sin_family = AF_INET, .sin_port = htons(0), .sin_addr = inet_addr(ip_destination)};
+    socklen_t recvsocklen = sizeof(from);
 
-    // SEND PACKET
+    int sockfd_recv = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sockfd_recv == -1) {
+        logMessage("Failed to create socket");
+        pthread_exit(0);
+    }
+
+
+    for (int i = 0; i < packet_count; i++) {
+        if (sendto(sockfd_send, sendpacket, sizeof(sendpacket), 0, (struct sockaddr *)&addr, sizeof(addr)) != -1) {
+
+            // logMessage("Ping sending \n");
+            pthread_mutex_lock(&transmitMutex);
+
+            struct timeval start, end;  // its for rtt
+            gettimeofday(&start, NULL); // calculate milliseconds for response time
+
+            struct timeval timeout;
+            timeout.tv_sec = 1;
+            timeout.tv_usec = 0;
+            setsockopt(sockfd_recv, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+            while (1) {
+
+                if (recvfrom(sockfd_recv, recvpacket, sizeof(recvpacket), 0, (struct sockaddr *)(struct sockaddr *)&from, &recvsocklen) != -1) {
+
+                    struct iphdr *iprecv = (struct iphdr *)recvpacket;
+                    struct icmphdr *icmprecv = (struct icmphdr *)(recvpacket + (iprecv->ihl << 2));
+
+                    if (htons(icmprecv->un.echo.id) == 0) {
+                        gettimeofday(&end, NULL);  // Store end time
+                        long seconds = end.tv_sec - start.tv_sec;
+                        long microseconds = end.tv_usec - start.tv_usec;
+
+                        if (microseconds < 0) {
+                            seconds--;
+                            microseconds += 1000000;
+                        }
+                        double elapsed = seconds + microseconds * 1e-6 * 1000;
+                        int elapsed_int = (int)(elapsed * 1000);
+                        // printf("Response time: %.3f ms\n\n", elapsed);
+                        // printf("Response time: %.4e \n\n", elapsed_int);
+                        // 64 bytes from 8.8.8.8: icmp_seq=4 ttl=60 time=33.2 ms
+                        printf("60 bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n", ip_destination, htons(icmp->un.echo.sequence), ip->ttl, elapsed);
+                        successfulPings++;
+                        break;
+                    } else {
+                        logMessage("Ping recv irrelevent \n");
+                        irreleventPings++;
+                    }
+
+                } else {
+                    logMessage("Ping recv failed \n");
+                    failedPings++;
+                    break;
+                }
+
+            } // end of while loop
+
+            pthread_mutex_unlock(&transmitMutex);
+
+        } else {
+            logMessage("Ping send failed \n");
+            pthread_mutex_lock(&transmitMutex);
+            failedPings++;
+            pthread_mutex_unlock(&transmitMutex);
+        }
+
+    }
+    close(sockfd_send);
+    close(sockfd_recv);
+    pthread_exit(0);
+}
+
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <target_ip> <packet_count>\n", argv[0]);
+        return 1;
+    }
+
+    char *target_ip = argv[1];
+    max_threads = atoi(argv[2]);
+    packet_count = atoi(argv[2]);
+
+    if (packet_count <= 0) {
+        fprintf(stderr, "Invalid number of packets. Must be greater than 0.\n");
+        return 1;
+    }
+
+    if (max_threads <= 0) {
+        fprintf(stderr, "Invalid number of threads. Must be greater than 0.\n");
+        return 1;
+    }
+    pthread_t threads[max_threads];
+
+    // Spawn threads to perform pinging.
+    for (int i = 0; i < max_threads; i++) {
+        if (pthread_create(&threads[i], NULL, pingFunction, target_ip)) {
+            fprintf(stderr, "Error creating thread\n");
+            return 1;
+        }
+    }
+
+    // This code will actually never reach here.
+    for (int i = 0; i < max_threads; i++) {
+        printf("Joining thread %d\n", i);
+        pthread_join(threads[i], NULL);
+    }
+
+
+    printf("Metrics: Successful pings = %u, Failed pings = %u\n", successfulPings, failedPings);
+
+
+    return 0;
+}
+
+
+
+    /*
     int sock_check_send = sendto(sockfd, packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr));
     if (sock_check_send < 0) {
         perror("sendto");
@@ -371,4 +431,4 @@ int main() {
     close(sockfd_recv);
     free(mac_destination_ptr);
     return EXIT_SUCCESS;
-}
+    */
