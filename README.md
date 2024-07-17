@@ -4,11 +4,10 @@
 Project aims to create a network monitoring system, capable of analyzing the signals. Dive into depths of computer networks.
 
 ## Features
-- **Network Monitoring**: Monitor network devices.
-- **Network Discovery**: Discover network devices across all layers.
-- **Real-Time Packet Analysis**: Analyze network packets like ARP, ICMP and SNMP with precision, extracting valuable information and unraveling the network behavior.
-- **Event and Alerts**: Receive alerts and notifications when network anomalies are detected, allowing you to take action and prevent potential disasters.
-- **Reports and Notifications**: Mail, SMS, IVR, In-App notifications, and more.
+- **Monitoring**: Monitor network devices.
+- **Discovery**: Discover network devices across all layers.
+- **Data Analysis**: Analyze network packets like ARP, ICMP and SNMP with precision, extracting valuable information and unraveling the network behavior.
+- **Events**: Receive events from devices, using protocols like snmp-trap.
 
 ## Getting Started
 The Bowl of Petunias is comprised of highly customizable and extensible modules, each with their own unique capabilities. The following modules are currently available:
