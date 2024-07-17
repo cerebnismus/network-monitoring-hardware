@@ -1,7 +1,4 @@
 /*
-  NAME: Bowl of Petunias - Ethernet (bop-eth)
-  AUTH: Oguzhan Ince (cerebnismus) 
-  MAIL: <oguzhan.ince@protonmail.com>
   DATE: July 07, 2023.
   DESC: Send a icmp requests to a remote network nodes. 
   
@@ -18,28 +15,28 @@ arduino-cli lib install "SoftwareSerial@1.0.0"
 arduino-cli compile  \
   --fqbn arduino:avr:uno  \
   --port /dev/ttyUSB1  \
-  --libraries /home/pi/bowl-of-petunias/bop-eth/libs/  \
-  --build-cache-path /home/pi/bowl-of-petunias/bop-eth/build-cache/  \
+  --libraries /home/pi/network-monitoring-hardware/bop-eth/libs/  \
+  --build-cache-path /home/pi/network-monitoring-hardware/bop-eth/build-cache/  \
   --export-binaries --warnings all  \
-  --output-dir /home/pi/bowl-of-petunias/bop-eth/bin/  \
+  --output-dir /home/pi/network-monitoring-hardware/bop-eth/bin/  \
   --upload  \
   --verify  \
   --verbose  \
   --clean \
-  /home/pi/bowl-of-petunias/bop-eth/bop-eth.ino
+  /home/pi/network-monitoring-hardware/bop-eth/bop-eth.ino
 
 arduino-cli compile  \
   --fqbn arduino:avr:uno  \
   --port /dev/cu.usbserial-14120  \
-  --libraries /Users/macbook/Documents/bowl-of-petunias/bop-eth/libs/  \
-  --build-cache-path /Users/macbook/Documents/bowl-of-petunias/bop-eth/build-cache/  \
+  --libraries /Users/macbook/Documents/network-monitoring-hardware/bop-eth/libs/  \
+  --build-cache-path /Users/macbook/Documents/network-monitoring-hardware/bop-eth/build-cache/  \
   --export-binaries --warnings all  \
-  --output-dir /Users/macbook/Documents/bowl-of-petunias/bop-eth/bin/  \
+  --output-dir /Users/macbook/Documents/network-monitoring-hardware/bop-eth/bin/  \
   --upload  \
   --verify  \
   --verbose  \
   --clean \
-  /Users/macbook/Documents/bowl-of-petunias/bop-eth/bop-eth.ino
+  /Users/macbook/Documents/network-monitoring-hardware/bop-eth/bop-eth.ino
 
 */
 
