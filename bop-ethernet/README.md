@@ -21,15 +21,15 @@ For Linux (Raspberry Pi):
 arduino-cli compile  \
   --fqbn arduino:avr:uno  \
   --port /dev/ttyUSB1  \
-  --libraries /home/pi/bowl-of-petunias/bop-eth/libs/  \
-  --build-cache-path /home/pi/bowl-of-petunias/bop-eth/build-cache/  \
+  --libraries /home/pi/network-monitoring-hardware/bop-eth/libs/  \
+  --build-cache-path /home/pi/network-monitoring-hardware/bop-eth/build-cache/  \
   --export-binaries --warnings all  \
-  --output-dir /home/pi/bowl-of-petunias/bop-eth/bin/  \
+  --output-dir /home/pi/network-monitoring-hardware/bop-eth/bin/  \
   --upload  \
   --verify  \
   --verbose  \
   --clean \
-  /home/pi/bowl-of-petunias/bop-eth/bop-eth.ino
+  /home/pi/network-monitoring-hardware/bop-eth/bop-eth.ino
 ```
 
 For macOS:
@@ -37,15 +37,15 @@ For macOS:
 arduino-cli compile  \
   --fqbn arduino:avr:uno  \
   --port /dev/cu.usbserial-14120  \
-  --libraries /Users/macbook/Documents/bowl-of-petunias/bop-eth/libs/  \
-  --build-cache-path /Users/macbook/Documents/bowl-of-petunias/bop-eth/build-cache/  \
+  --libraries /Users/macbook/Documents/network-monitoring-hardware/bop-eth/libs/  \
+  --build-cache-path /Users/macbook/Documents/network-monitoring-hardware/bop-eth/build-cache/  \
   --export-binaries --warnings all  \
-  --output-dir /Users/macbook/Documents/bowl-of-petunias/bop-eth/bin/  \
+  --output-dir /Users/macbook/Documents/network-monitoring-hardware/bop-eth/bin/  \
   --upload  \
   --verify  \
   --verbose  \
   --clean \
-  /Users/macbook/Documents/bowl-of-petunias/bop-eth/bop-eth.ino
+  /Users/macbook/Documents/network-monitoring-hardware/bop-eth/bop-eth.ino
 ```
 
 The software will send ICMP requests to the IP address specified in the destinationIP variable in the code. You should replace the IP address with the one for your target network node.
